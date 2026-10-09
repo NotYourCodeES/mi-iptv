@@ -1,0 +1,25 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="aurora-news" tvg-name="Aurora News" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/aurora-news.png" group-title="News",Aurora News
+https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
+#EXTINF:-1 tvg-id="meridian-24" tvg-name="Meridian 24" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/meridian-24.png" group-title="News",Meridian 24
+https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8
+#EXTINF:-1 tvg-id="nebula-sports" tvg-name="Nebula Sports" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/nebula-sports.png" group-title="Sports",Nebula Sports
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="orbit-arena" tvg-name="Orbit Arena" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/orbit-arena.png" group-title="Sports",Orbit Arena
+https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
+#EXTINF:-1 tvg-id="pixel-kids" tvg-name="Pixel Kids" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/pixel-kids.png" group-title="Kids",Pixel Kids
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="bunny-tv" tvg-name="Bunny TV" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/bunny-tv.png" group-title="Kids",Bunny TV
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="terra-docs" tvg-name="Terra Docs" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/terra-docs.png" group-title="Documentaries",Terra Docs
+https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8
+#EXTINF:-1 tvg-id="deep-blue" tvg-name="Deep Blue" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/deep-blue.png" group-title="Documentaries",Deep Blue
+https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8
+#EXTINF:-1 tvg-id="volt-music" tvg-name="Volt Music" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/volt-music.png" group-title="Music",Volt Music
+https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
+#EXTINF:-1 tvg-id="lumen-cinema" tvg-name="Lumen Cinema" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/lumen-cinema.png" group-title="Movies",Lumen Cinema
+https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8
+#EXTINF:-1 tvg-id="steel-movies" tvg-name="Steel Movies" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/steel-movies.png" group-title="Movies",Steel Movies
+https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8
+#EXTINF:-1 tvg-id="sintel-channel" tvg-name="Sintel Channel" tvg-logo="https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/logos/sintel-channel.png" group-title="Movies",Sintel Channel
+https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8
