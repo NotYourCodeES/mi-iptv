@@ -82,6 +82,14 @@ Pick whichever is easiest:
 - **With ADB.** Enable developer options and USB/network debugging on the TV, then run `adb connect TV-IP:5555` and `adb install app-debug.apk`.
 - **With a USB stick.** Copy the APK and open it with a file manager on the TV.
 
+### Try it without an IPTV subscription
+
+Use the [demo playlist](docs/demo) — fictional channels with logos, streaming open movies (Big Buck Bunny, Sintel, Tears of Steel) and public test streams. Paste this URL as the **M3U link**:
+
+```
+https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.m3u
+```
+
 ### Set it up
 
 1. Open **Mi IPTV** on the TV. It shows an address such as `http://192.168.1.50:8080` and a QR code.

@@ -27,6 +27,14 @@ Escribir enlaces largos y contraseñas con el mando de la tele es un suplicio. M
 2. Instálalo en la tele con la app **Downloader** (sirviendo el APK desde el ordenador con `jwebserver -b 0.0.0.0 -p 8000`), con `adb install` o con un pendrive.
 3. Abre **Mi IPTV** en la tele, entra desde el navegador en la dirección que muestra (por ejemplo `http://192.168.1.50:8080`) y escribe los datos de tu proveedor.
 
+### Pruébala sin suscripción IPTV
+
+Usa la [lista de demostración](docs/demo): canales ficticios con logos que emiten películas abiertas y emisiones de prueba públicas. Pega este enlace como **Enlace M3U**:
+
+```
+https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.m3u
+```
+
 ## Mando a distancia
 
 | Botón | Pantalla completa | Lista de canales |
