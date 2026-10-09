@@ -1,0 +1,23 @@
+#EXTM3U
+#
+# Demo playlist for Mi IPTV.
+# Only open-licensed films and public test streams published by their owners for player testing.
+#
+#EXTINF:-1 tvg-name="Big Buck Bunny" group-title="Open Movies",Big Buck Bunny
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-name="Tears of Steel" group-title="Open Movies",Tears of Steel
+https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8
+#EXTINF:-1 tvg-name="Tears of Steel HD" group-title="Open Movies",Tears of Steel HD
+https://test-streams.mux.dev/tos_ismc/main.m3u8
+#EXTINF:-1 tvg-name="Akamai Live Test" group-title="Live Test Streams",Akamai Live Test
+https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
+#EXTINF:-1 tvg-name="Unified Live Demo" group-title="Live Test Streams",Unified Live Demo
+https://demo.unified-streaming.com/k8s/live/stable/live.isml/.m3u8
+#EXTINF:-1 tvg-name="BipBop 16:9" group-title="Apple Test Streams",BipBop 16:9
+https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8
+#EXTINF:-1 tvg-name="BipBop Advanced" group-title="Apple Test Streams",BipBop Advanced
+https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8
+#EXTINF:-1 tvg-name="BipBop Advanced TS" group-title="Apple Test Streams",BipBop Advanced TS
+https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8
+#EXTINF:-1 tvg-name="Dolby Atmos Demo" group-title="Apple Test Streams",Dolby Atmos Demo
+https://devstreaming-cdn.apple.com/videos/streaming/examples/adv_dv_atmos/main.m3u8
