@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="58dp"
+    android:background="@drawable/bg_row"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="10dp"
+    android:paddingEnd="16dp">
+
+    <TextView
+        android:id="@+id/channelNumber"
+        android:layout_width="46dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="end"
+        android:singleLine="true"
+        android:textColor="@color/row_secondary"
+        android:textSize="14sp" />
+
+    <FrameLayout
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:background="@drawable/bg_logo">
+
+        <TextView
+            android:id="@+id/channelInitial"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:textColor="@color/text2"
+            android:textSize="17sp" />
+
+        <ImageView
+            android:id="@+id/channelLogo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="5dp"
+            android:scaleType="fitCenter" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/channelName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
+        android:singleLine="true"
+        android:textColor="@color/row_primary"
+        android:textSize="17sp" />
+
+    <TextView
+        android:id="@+id/channelStar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:text="★"
+        android:textColor="@color/gold"
+        android:textSize="18sp"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/channelLive"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/dot_live"
+        android:visibility="gone" />
+</LinearLayout>

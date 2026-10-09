@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Run unit tests and build the APK
+        run: |
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MiIPTV-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Attach APK to the GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "MiIPTV-${GITHUB_REF_NAME}.apk"
+          gh release create "$GITHUB_REF_NAME" "MiIPTV-${GITHUB_REF_NAME}.apk" \
+            --title "Mi IPTV $GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

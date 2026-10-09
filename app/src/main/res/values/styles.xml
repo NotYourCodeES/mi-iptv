@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:colorAccent">@color/accent</item>
+    </style>
+
+    <style name="SectionTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">10dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="PanelList">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:divider">@null</item>
+        <item name="android:dividerHeight">4dp</item>
+        <item name="android:listSelector">@drawable/list_focus</item>
+        <item name="android:drawSelectorOnTop">false</item>
+        <item name="android:choiceMode">singleChoice</item>
+        <item name="android:scrollbars">none</item>
+        <item name="android:fadingEdgeLength">40dp</item>
+        <item name="android:requiresFadingEdge">vertical</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">24dp</item>
+    </style>
+
+    <style name="KeyCap">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_key</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="KeyLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:layout_marginEnd">22dp</item>
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+</resources>

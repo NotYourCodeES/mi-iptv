@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi IPTV · Setup</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --line:#2a2f3a; --text:#e8eaf0; --muted:#9aa1b2; --accent:#3d8bfd; --ok:#2fb67a; --err:#e5534b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:560px; margin:48px auto; padding:0 16px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 28px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; }
+  .tabs { display:flex; gap:8px; margin-bottom:20px; }
+  .tab { flex:1; padding:10px; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--muted); font:inherit; cursor:pointer; }
+  .tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  label { display:block; font-size:14px; color:var(--muted); margin:14px 0 6px; }
+  input { width:100%; padding:11px 12px; border-radius:9px; border:1px solid var(--line); background:#0c0e12; color:var(--text); font:inherit; }
+  input:focus { outline:2px solid var(--accent); border-color:transparent; }
+  .hint { font-size:13px; color:var(--muted); margin-top:6px; }
+  .row { display:flex; gap:10px; margin-top:22px; }
+  button.main { flex:1; padding:12px; border:0; border-radius:10px; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button.sec { padding:12px 16px; border:1px solid var(--line); border-radius:10px; background:transparent; color:var(--text); font:inherit; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:default; }
+  .msg { margin-top:16px; padding:10px 12px; border-radius:9px; display:none; }
+  .msg.ok { display:block; background:rgba(47,182,122,.15); color:var(--ok); }
+  .msg.err { display:block; background:rgba(229,83,75,.15); color:var(--err); }
+  .status { margin-top:18px; color:var(--muted); font-size:14px; }
+  .status b { color:var(--text); font-weight:600; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Mi IPTV</h1>
+  <p class="sub" data-i18n="sub">Enter your provider details here. The TV receives them instantly.</p>
+  <div class="card">
+    <div class="tabs">
+      <button type="button" class="tab on" data-mode="m3u" data-i18n="tabM3u">M3U link</button>
+      <button type="button" class="tab" data-mode="xtream" data-i18n="tabXtream">Username &amp; password</button>
+    </div>
+    <form id="f" autocomplete="off">
+      <div id="m3u">
+        <label for="m3uUrl" data-i18n="m3uLabel">Playlist URL (M3U)</label>
+        <input id="m3uUrl" name="m3uUrl" placeholder="http://...">
+        <div class="hint" data-i18n="m3uHint">The address your provider gave you. It usually ends in .m3u or .m3u8.</div>
+      </div>
+      <div id="xtream" hidden>
+        <label for="server" data-i18n="server">Server</label>
+        <input id="server" name="server" placeholder="http://server.com:8080">
+        <label for="user" data-i18n="user">Username</label>
+        <input id="user" name="user">
+        <label for="pass" data-i18n="pass">Password</label>
+        <input id="pass" name="pass" type="password">
+        <div class="hint" id="passHint" data-i18n="passHint" hidden>A password is already saved. Leave it blank to keep it.</div>
+      </div>
+      <div class="row">
+        <button class="main" type="submit" data-i18n="save">Save and send to TV</button>
+        <button class="sec" type="button" id="reload" data-i18n="reload">Reload channels</button>
+      </div>
+    </form>
+    <div class="msg" id="msg"></div>
+    <div class="status"><span data-i18n="statusLabel">TV status:</span> <b id="status">…</b></div>
+  </div>
+</main>
+<script>
+  // Interface texts: English by default, Spanish when the browser is in Spanish
+  const T = {
+    en: { sub: "Enter your provider details here. The TV receives them instantly.", tabM3u: "M3U link",
+          tabXtream: "Username & password", m3uLabel: "Playlist URL (M3U)",
+          m3uHint: "The address your provider gave you. It usually ends in .m3u or .m3u8.", server: "Server",
+          user: "Username", pass: "Password", passHint: "A password is already saved. Leave it blank to keep it.",
+          save: "Save and send to TV", reload: "Reload channels", statusLabel: "TV status:",
+          offline: "no connection to the TV", unreachable: "Couldn't reach the TV. Is the app still open?" },
+    es: { sub: "Escribe aquí los datos de tu proveedor. La tele los recibe al instante.", tabM3u: "Enlace M3U",
+          tabXtream: "Usuario y contraseña", m3uLabel: "Enlace de la lista (M3U)",
+          m3uHint: "Es la dirección que te dio tu proveedor y suele terminar en .m3u o .m3u8.", server: "Servidor",
+          user: "Usuario", pass: "Contraseña", passHint: "Ya hay una contraseña guardada. Déjala en blanco para conservarla.",
+          save: "Guardar y enviar a la tele", reload: "Recargar canales", statusLabel: "Estado de la tele:",
+          offline: "sin conexión con la tele", unreachable: "No se pudo contactar con la tele. ¿Sigue la app abierta?" }
+  };
+  const lang = (navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
+  const t = k => T[lang][k];
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+
+  let mode = "m3u";
+  const $ = id => document.getElementById(id);
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.mode === m));
+    $("m3u").hidden = m !== "m3u";
+    $("xtream").hidden = m !== "xtream";
+  }
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => setMode(t.dataset.mode));
+  function show(ok, text) { const m = $("msg"); m.className = "msg " + (ok ? "ok" : "err"); m.textContent = text; }
+
+  async function load(first) {
+    try {
+      const r = await fetch("/api/config");
+      const c = await r.json();
+      if (first) {
+        setMode(c.mode === "xtream" ? "xtream" : "m3u");
+        $("m3uUrl").value = c.m3uUrl || "";
+        $("server").value = c.server || "";
+        $("user").value = c.user || "";
+        $("passHint").hidden = !c.hasPass;
+      }
+      $("status").textContent = c.status;
+    } catch (e) { $("status").textContent = t("offline"); }
+  }
+
+  $("f").onsubmit = async e => {
+    e.preventDefault();
+    const b = e.submitter || document.querySelector("button.main");
+    b.disabled = true;
+    const data = new URLSearchParams({ mode, m3uUrl:$("m3uUrl").value, server:$("server").value, user:$("user").value, pass:$("pass").value });
+    try {
+      const r = await fetch("/api/config", { method:"POST", body:data });
+      const j = await r.json();
+      show(j.ok, j.message);
+      if (j.ok) { $("pass").value = ""; if (mode === "xtream") $("passHint").hidden = false; }
+    } catch (err) { show(false, t("unreachable")); }
+    b.disabled = false;
+    load(false);
+  };
+  $("reload").onclick = async () => {
+    try { const r = await fetch("/api/reload", { method:"POST" }); const j = await r.json(); show(j.ok, j.message); }
+    catch (err) { show(false, t("unreachable")); }
+  };
+  load(true);
+  setInterval(() => load(false), 3000);
+</script>
+</body>
+</html>

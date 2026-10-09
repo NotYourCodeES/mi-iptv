@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_waiting">Esperando configuración</string>
+    <string name="status_loading">Cargando canales…</string>
+    <string name="status_channels">%d canales</string>
+    <string name="error_empty_playlist">La lista se descargó pero no contiene canales. Revisa los datos.</string>
+    <string name="error_download">No se pudo descargar la lista (%s)</string>
+    <string name="error_using_cache">%s. Usando la última lista guardada.</string>
+
+    <string name="toast_cannot_play">No se puede reproducir este canal</string>
+    <string name="toast_no_favorites">Aún no tienes favoritos: mantén pulsado OK sobre un canal</string>
+    <string name="toast_fav_added">★  %s añadido a favoritos</string>
+    <string name="toast_fav_removed">%s quitado de favoritos</string>
+    <string name="toast_press_back_again">Pulsa Atrás otra vez para salir</string>
+
+    <string name="group_favorites">Favoritos</string>
+    <string name="group_all">Todos los canales</string>
+    <string name="group_uncategorized">Sin categoría</string>
+    <string name="section_categories">CATEGORÍAS</string>
+    <string name="section_channels">CANALES</string>
+    <string name="channels_title">%1$s  ·  %2$d</string>
+    <string name="favorites_empty">Aún no tienes favoritos.\nMantén pulsado OK sobre un canal para añadirlo.</string>
+
+    <string name="preview_badge">VISTA PREVIA</string>
+    <string name="preview_none_title">Elige un canal</string>
+    <string name="preview_none_text">Muévete por la lista para verlo aquí</string>
+    <string name="key_ok">OK</string>
+    <string name="hint_watch">Ver a pantalla completa</string>
+    <string name="key_hold_ok">Mantén OK</string>
+    <string name="hint_favorite">Añadir / quitar favorito</string>
+    <string name="key_guide">Guía</string>
+    <string name="hint_guide">Ir a favoritos</string>
+    <string name="key_back">Atrás</string>
+    <string name="hint_back">Volver al canal</string>
+
+    <string name="osd_live">EN DIRECTO</string>
+    <string name="osd_hints">OK  lista   ·   ▲▼  cambiar   ·   Guía  favoritos</string>
+
+    <string name="footer_setup">Configurar:  %s</string>
+    <string name="cfg_saved">Datos guardados. La tele está cargando los canales.</string>
+    <string name="cfg_missing_first">Primero guarda los datos de tu proveedor.</string>
+    <string name="cfg_reloading">Recargando los canales en la tele…</string>
+    <string name="cfg_missing_fields">Faltan datos por rellenar.</string>
+
+    <string name="welcome_title">Bienvenido a Mi IPTV</string>
+    <string name="welcome_text">Abre esta dirección en el navegador de tu ordenador, o escanea el código con el móvil, y escribe los datos de tu proveedor.</string>
+    <string name="welcome_loading_title">Cargando tus canales…</string>
+    <string name="welcome_loading_text">Esto puede tardar unos segundos la primera vez.</string>
+    <string name="welcome_error_title">No se han podido cargar los canales</string>
+    <string name="welcome_error_text">Revisa los datos de tu proveedor desde esta dirección:</string>
+    <string name="welcome_port_busy">Puerto 8080 ocupado</string>
+    <string name="welcome_no_network">La tele no está conectada a la red</string>
+</resources>

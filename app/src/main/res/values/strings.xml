@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Mi IPTV</string>
+
+    <!-- Status -->
+    <string name="status_waiting">Waiting for setup</string>
+    <string name="status_loading">Loading channels…</string>
+    <string name="status_channels">%d channels</string>
+    <string name="error_empty_playlist">The playlist was downloaded but contains no channels. Check your details.</string>
+    <string name="error_download">Could not download the playlist (%s)</string>
+    <string name="error_using_cache">%s. Using the last saved playlist.</string>
+
+    <!-- Toasts -->
+    <string name="toast_cannot_play">This channel can\'t be played</string>
+    <string name="toast_no_favorites">No favorites yet: long-press OK on a channel</string>
+    <string name="toast_fav_added">★  %s added to favorites</string>
+    <string name="toast_fav_removed">%s removed from favorites</string>
+    <string name="toast_press_back_again">Press Back again to exit</string>
+
+    <!-- Groups and lists -->
+    <string name="group_favorites">Favorites</string>
+    <string name="group_all">All channels</string>
+    <string name="group_uncategorized">Uncategorized</string>
+    <string name="section_categories">CATEGORIES</string>
+    <string name="section_channels">CHANNELS</string>
+    <string name="channels_title">%1$s  ·  %2$d</string>
+    <string name="favorites_empty">No favorites yet.\nLong-press OK on a channel to add it.</string>
+
+    <!-- Preview -->
+    <string name="preview_badge">PREVIEW</string>
+    <string name="preview_none_title">Pick a channel</string>
+    <string name="preview_none_text">Move through the list to preview it here</string>
+    <string name="key_ok">OK</string>
+    <string name="hint_watch">Watch full screen</string>
+    <string name="key_hold_ok">Hold OK</string>
+    <string name="hint_favorite">Add / remove favorite</string>
+    <string name="key_guide">Guide</string>
+    <string name="hint_guide">Go to favorites</string>
+    <string name="key_back">Back</string>
+    <string name="hint_back">Back to channel</string>
+
+    <!-- Channel banner -->
+    <string name="osd_live">LIVE</string>
+    <string name="osd_hints">OK  list   ·   ▲▼  switch   ·   Guide  favorites</string>
+
+    <!-- Setup -->
+    <string name="footer_setup">Setup:  %s</string>
+    <string name="cfg_saved">Saved. The TV is loading your channels.</string>
+    <string name="cfg_missing_first">Save your provider details first.</string>
+    <string name="cfg_reloading">Reloading channels on the TV…</string>
+    <string name="cfg_missing_fields">Some fields are missing.</string>
+
+    <!-- Welcome screen -->
+    <string name="welcome_title">Welcome to Mi IPTV</string>
+    <string name="welcome_text">Open this address in your computer\'s browser, or scan the code with your phone, and enter your provider details.</string>
+    <string name="welcome_loading_title">Loading your channels…</string>
+    <string name="welcome_loading_text">This can take a few seconds the first time.</string>
+    <string name="welcome_error_title">Couldn\'t load your channels</string>
+    <string name="welcome_error_text">Check your provider details at this address:</string>
+    <string name="welcome_port_busy">Port 8080 is busy</string>
+    <string name="welcome_no_network">The TV is not connected to a network</string>
+</resources>
