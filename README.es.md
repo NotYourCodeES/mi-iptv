@@ -7,7 +7,12 @@
 Escribir enlaces largos y contraseñas con el mando de la tele es un suplicio. Mi IPTV lleva un pequeño servidor web dentro de la app: abres la dirección que aparece en la tele (o escaneas el código QR), pegas tu enlace M3U o tus datos Xtream Codes en el navegador, y los canales aparecen en la tele en unos segundos.
 
 <p align="center">
-  <img src="docs/screenshots/setup-page.png" width="560" alt="Página de configuración desde el navegador">
+  <img src="docs/screenshots/channels.png" width="820" alt="Lista de canales con categorías y vista previa">
+</p>
+<p align="center">
+  <img src="docs/screenshots/qr-setup.png" width="400" alt="Pantalla de bienvenida con la dirección y el código QR">
+  &nbsp;
+  <img src="docs/screenshots/setup-page.png" width="400" alt="Página de configuración desde el navegador">
 </p>
 
 ## Funciones

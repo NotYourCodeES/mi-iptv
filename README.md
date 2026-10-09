@@ -11,11 +11,15 @@
 
 Typing long playlist URLs and passwords with a TV remote is painful. Mi IPTV runs a tiny web server inside the app: open the address shown on the TV (or scan the QR code), paste your M3U link or Xtream Codes credentials in your browser, and the channels appear on the TV within seconds.
 
-<!-- Add a photo of the app running on your TV here, e.g. docs/screenshots/tv-channels.jpg -->
-
 <p align="center">
-  <img src="docs/screenshots/setup-page.png" width="560" alt="Setup page opened from a computer browser">
+  <img src="docs/screenshots/channels.png" width="820" alt="Channel list with categories, channel numbers and live preview">
 </p>
+<p align="center">
+  <img src="docs/screenshots/qr-setup.png" width="400" alt="Welcome screen with the setup address and QR code">
+  &nbsp;
+  <img src="docs/screenshots/setup-page.png" width="400" alt="Setup page opened from a computer browser">
+</p>
+
 
 ## Features
 
