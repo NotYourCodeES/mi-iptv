@@ -16,6 +16,7 @@ import java.util.Map;
 /**
  * Tiny web server running inside the TV app.
  * Open http://TV-IP:8080 from a computer or phone on the same network to enter the provider details.
+ * The phone remote app talks to the same server, under /api/remote/ (see {@link RemoteApi}).
  */
 public final class ConfigServer {
 
@@ -40,12 +41,18 @@ public final class ConfigServer {
     private final String html;
     private final Listener listener;
     private volatile ServerSocket socket;
+    private volatile RemoteApi remote;
     private Thread acceptThread;
 
     public ConfigServer(int port, String html, Listener listener) {
         this.port = port;
         this.html = html;
         this.listener = listener;
+    }
+
+    /** Enables the phone remote API. Without it the server behaves exactly as before. */
+    public void setRemote(RemoteApi remote) {
+        this.remote = remote;
     }
 
     public int getPort() {
@@ -99,19 +106,36 @@ public final class ConfigServer {
             if (req.length < 2) { send(out, 400, "text/plain", "Bad request"); return; }
             String method = req[0].toUpperCase(Locale.ROOT);
             String path = req[1];
+            String queryString = "";
             int q = path.indexOf('?');
-            if (q >= 0) path = path.substring(0, q);
+            if (q >= 0) {
+                queryString = path.substring(q + 1);
+                path = path.substring(0, q);
+            }
 
-            int contentLength = 0;
+            Map<String, String> headers = new HashMap<>();
             for (int i = 1; i < lines.length; i++) {
                 int colon = lines[i].indexOf(':');
-                if (colon > 0 && lines[i].substring(0, colon).trim().equalsIgnoreCase("content-length")) {
-                    try { contentLength = Integer.parseInt(lines[i].substring(colon + 1).trim()); }
-                    catch (NumberFormatException ignored) {}
+                if (colon > 0) {
+                    headers.put(lines[i].substring(0, colon).trim().toLowerCase(Locale.ROOT), lines[i].substring(colon + 1).trim());
                 }
+            }
+            int contentLength = 0;
+            String cl = headers.get("content-length");
+            if (cl != null) {
+                try { contentLength = Integer.parseInt(cl); }
+                catch (NumberFormatException ignored) {}
             }
             if (contentLength < 0 || contentLength > MAX_BODY) { send(out, 413, "text/plain", "Too large"); return; }
             byte[] body = readBytes(in, contentLength);
+
+            RemoteApi r = remote;
+            if (r != null && path.startsWith("/api/remote/")) {
+                HttpRequest request = new HttpRequest(method, path, parseForm(queryString), headers,
+                        parseForm(new String(body, StandardCharsets.UTF_8)));
+                r.handle(request, out);
+                return;
+            }
 
             if (method.equals("GET") && (path.equals("/") || path.equals("/index.html"))) {
                 send(out, 200, "text/html; charset=utf-8", html);
@@ -177,7 +201,7 @@ public final class ConfigServer {
         return map;
     }
 
-    static String json(String s) {
+    public static String json(String s) {
         if (s == null) return "null";
         StringBuilder b = new StringBuilder("\"");
         for (int i = 0; i < s.length(); i++) {
@@ -227,12 +251,20 @@ public final class ConfigServer {
     }
 
     private static void send(OutputStream out, int code, String type, String body) throws IOException {
-        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-        String reason = code == 200 ? "OK" : code == 404 ? "Not Found" : code == 413 ? "Payload Too Large" : "Bad Request";
+        send(out, code, type, body.getBytes(StandardCharsets.UTF_8));
+    }
+
+    static void send(OutputStream out, int code, String type, byte[] bytes) throws IOException {
+        send(out, code, type, bytes, "Cache-Control: no-store\r\n");
+    }
+
+    static void send(OutputStream out, int code, String type, byte[] bytes, String extraHeaders) throws IOException {
+        String reason = code == 200 ? "OK" : code == 401 ? "Unauthorized" : code == 404 ? "Not Found"
+                : code == 413 ? "Payload Too Large" : "Bad Request";
         String head = "HTTP/1.1 " + code + " " + reason + "\r\n"
                 + "Content-Type: " + type + "\r\n"
                 + "Content-Length: " + bytes.length + "\r\n"
-                + "Cache-Control: no-store\r\n"
+                + extraHeaders
                 + "Connection: close\r\n\r\n";
         out.write(head.getBytes(StandardCharsets.ISO_8859_1));
         out.write(bytes);

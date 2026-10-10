@@ -34,7 +34,7 @@
     <string name="hint_back">Volver al canal</string>
 
     <string name="osd_live">EN DIRECTO</string>
-    <string name="osd_hints">OK  lista   ·   ▲▼  cambiar   ·   Guía  favoritos</string>
+    <string name="osd_hints">OK  lista   ·   ▲▼  cambiar   ·   0–9  número   ·   Guía  favoritos</string>
 
     <string name="footer_setup">Configurar:  %s</string>
     <string name="cfg_saved">Datos guardados. La tele está cargando los canales.</string>
@@ -50,4 +50,23 @@
     <string name="welcome_error_text">Revisa los datos de tu proveedor desde esta dirección:</string>
     <string name="welcome_port_busy">Puerto 8080 ocupado</string>
     <string name="welcome_no_network">La tele no está conectada a la red</string>
+
+    <!-- Controles extra del mando -->
+    <string name="toast_no_channel_number">No existe el canal %d</string>
+    <string name="toast_no_previous">Todavía no hay canal anterior</string>
+    <string name="toast_paused">En pausa · pulsa Play para volver al directo</string>
+    <string name="group_search">Búsqueda «%s»</string>
+    <string name="search_empty">Ningún canal coincide con «%s»</string>
+    <string name="group_shared">Enviado desde el móvil</string>
+    <string name="shared_default_name">Emisión compartida</string>
+
+    <!-- Mando del móvil -->
+    <string name="pair_badge">MANDO DEL MÓVIL</string>
+    <string name="pair_title">Conecta tu móvil</string>
+    <string name="pair_text">Escribe este código en «%s»</string>
+    <string name="pair_hint">El código caduca en 2 minutos  ·  Atrás para cancelar</string>
+    <string name="toast_phone_paired">«%s» ya funciona como mando</string>
+    <string name="remote_open_app">Abre Mi IPTV en la tele primero</string>
+    <string name="remote_busy">La tele está ocupada, inténtalo de nuevo</string>
+    <string name="remote_shared_playing">Reproduciendo en la tele</string>
 </resources>

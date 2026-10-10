@@ -1,0 +1,1046 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "About": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de"
+          }
+        }
+      }
+    },
+    "Add to favorites": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir a favoritos"
+          }
+        }
+      }
+    },
+    "Add your M3U link or Xtream login.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade tu enlace M3U o tus datos Xtream."
+          }
+        }
+      }
+    },
+    "Address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dirección"
+          }
+        }
+      }
+    },
+    "All": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        }
+      }
+    },
+    "Allow Local Network access for Mi IPTV Remote in Settings to find your TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite el acceso a la red local para Mi IPTV Remote en Ajustes para encontrar tu tele."
+          }
+        }
+      }
+    },
+    "Back": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atrás"
+          }
+        }
+      }
+    },
+    "CH": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CH"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        }
+      }
+    },
+    "Channel name or number": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre o número del canal"
+          }
+        }
+      }
+    },
+    "Channels": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canales"
+          }
+        }
+      }
+    },
+    "Clear": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar"
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        }
+      }
+    },
+    "Code": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código"
+          }
+        }
+      }
+    },
+    "Connect": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar"
+          }
+        }
+      }
+    },
+    "Connecting to the TV…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectando con la tele…"
+          }
+        }
+      }
+    },
+    "Connecting…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectando…"
+          }
+        }
+      }
+    },
+    "Couldn't find the TV's address. Try entering it by hand.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró la dirección de la tele. Prueba a escribirla a mano."
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar"
+          }
+        }
+      }
+    },
+    "Enter the TV address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribir la dirección de la tele"
+          }
+        }
+      }
+    },
+    "Enter the code on the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe el código de la tele"
+          }
+        }
+      }
+    },
+    "Favorite": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorito"
+          }
+        }
+      }
+    },
+    "Favorites": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoritos"
+          }
+        }
+      }
+    },
+    "Info": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Info"
+          }
+        }
+      }
+    },
+    "It's shown at the bottom of the TV screen, for example 192.168.1.50:8080.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aparece en la parte de abajo de la pantalla de la tele, por ejemplo 192.168.1.50:8080."
+          }
+        }
+      }
+    },
+    "LIVE": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EN DIRECTO"
+          }
+        }
+      }
+    },
+    "Loading channels…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando canales…"
+          }
+        }
+      }
+    },
+    "Looking for Mi IPTV… Make sure the app is open on the TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscando Mi IPTV… Comprueba que la app está abierta en la tele."
+          }
+        }
+      }
+    },
+    "Lost the connection with the TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se perdió la conexión con la tele."
+          }
+        }
+      }
+    },
+    "Mi IPTV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi IPTV"
+          }
+        }
+      }
+    },
+    "Mi IPTV Remote": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi IPTV Remote"
+          }
+        }
+      }
+    },
+    "Mi IPTV is closed on the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi IPTV está cerrada en la tele"
+          }
+        }
+      }
+    },
+    "More": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre"
+          }
+        }
+      }
+    },
+    "Name or number": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre o número"
+          }
+        }
+      }
+    },
+    "No channels yet": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía no hay canales"
+          }
+        }
+      }
+    },
+    "No connection with the TV. Retrying…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión con la tele. Reintentando…"
+          }
+        }
+      }
+    },
+    "No favorites yet": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no tienes favoritos"
+          }
+        }
+      }
+    },
+    "Not connected to the TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay conexión con la tele."
+          }
+        }
+      }
+    },
+    "Number": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "ON TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EN LA TELE"
+          }
+        }
+      }
+    },
+    "Open Mi IPTV Remote and connect it to your TV first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre Mi IPTV Remote y conéctala a tu tele primero."
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes"
+          }
+        }
+      }
+    },
+    "Open the app on the TV to use the remote.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre la app en la tele para usar el mando."
+          }
+        }
+      }
+    },
+    "PAUSED": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EN PAUSA"
+          }
+        }
+      }
+    },
+    "Paired phones work as a remote until you unpair them.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los móviles emparejados funcionan como mando hasta que los desemparejes."
+          }
+        }
+      }
+    },
+    "Paste": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pegar"
+          }
+        }
+      }
+    },
+    "Pick a channel": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige un canal"
+          }
+        }
+      }
+    },
+    "Play on the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproducir en la tele"
+          }
+        }
+      }
+    },
+    "Previous": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anterior"
+          }
+        }
+      }
+    },
+    "Reload channels on the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recargar canales en la tele"
+          }
+        }
+      }
+    },
+    "Remote": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mando"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar"
+          }
+        }
+      }
+    },
+    "Remove from favorites": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar de favoritos"
+          }
+        }
+      }
+    },
+    "Send a link": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar un enlace"
+          }
+        }
+      }
+    },
+    "Send to the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar a la tele"
+          }
+        }
+      }
+    },
+    "Sent to the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviado a la tele"
+          }
+        }
+      }
+    },
+    "Set up": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurar"
+          }
+        }
+      }
+    },
+    "Set up the provider": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurar el proveedor"
+          }
+        }
+      }
+    },
+    "Show a new code on the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar otro código en la tele"
+          }
+        }
+      }
+    },
+    "Show on TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver en la tele"
+          }
+        }
+      }
+    },
+    "Source code on GitHub": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código fuente en GitHub"
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estado"
+          }
+        }
+      }
+    },
+    "Swipe a channel to the left, or hold OK on the TV, to add it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desliza un canal hacia la izquierda, o mantén OK en la tele, para añadirlo."
+          }
+        }
+      }
+    },
+    "Swipe to move · Tap for OK\nHold for favorite": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desliza para moverte · Toca para OK\nMantén para favorito"
+          }
+        }
+      }
+    },
+    "Swipe to move, double-tap for OK": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desliza para moverte, toca dos veces para OK"
+          }
+        }
+      }
+    },
+    "TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tele"
+          }
+        }
+      }
+    },
+    "TV address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dirección de la tele"
+          }
+        }
+      }
+    },
+    "TVs on your Wi-Fi": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teles en tu Wi-Fi"
+          }
+        }
+      }
+    },
+    "That address doesn't answer like Mi IPTV. Check it on the TV screen.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esa dirección no responde como Mi IPTV. Compruébala en la pantalla de la tele."
+          }
+        }
+      }
+    },
+    "That code isn't right. Try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ese código no es correcto. Inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "The TV couldn't open that link.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La tele no pudo abrir ese enlace."
+          }
+        }
+      }
+    },
+    "The TV needs your provider": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La tele necesita tu proveedor"
+          }
+        }
+      }
+    },
+    "The TV no longer recognises this phone. Pair it again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La tele ya no reconoce este móvil. Vuelve a emparejarlo."
+          }
+        }
+      }
+    },
+    "The TV sent an unexpected answer. Update Mi IPTV on the TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La tele respondió algo inesperado. Actualiza Mi IPTV en la tele."
+          }
+        }
+      }
+    },
+    "The code expired. There's a new one on the TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El código ha caducado. Hay uno nuevo en la tele."
+          }
+        }
+      }
+    },
+    "There's no channel with that number": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ningún canal con ese número"
+          }
+        }
+      }
+    },
+    "There's no web link to send.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ningún enlace web para enviar."
+          }
+        }
+      }
+    },
+    "This can take a few seconds.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puede tardar unos segundos."
+          }
+        }
+      }
+    },
+    "Tip: in Safari or any other app, tap Share and choose Mi IPTV to send a link straight to the TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Truco: en Safari o cualquier otra app, toca Compartir y elige Mi IPTV para mandar un enlace directamente a la tele."
+          }
+        }
+      }
+    },
+    "Touch and hold to add to favorites": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén pulsado para añadir a favoritos"
+          }
+        }
+      }
+    },
+    "Touch surface": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superficie táctil"
+          }
+        }
+      }
+    },
+    "Type": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribir"
+          }
+        }
+      }
+    },
+    "Type a channel number": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe un número de canal"
+          }
+        }
+      }
+    },
+    "Type on the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribir en la tele"
+          }
+        }
+      }
+    },
+    "Type the address shown on the TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe la dirección que aparece en la tele."
+          }
+        }
+      }
+    },
+    "Unpair": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desemparejar"
+          }
+        }
+      }
+    },
+    "Unpair this phone": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desemparejar este móvil"
+          }
+        }
+      }
+    },
+    "Unpair this phone?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Desemparejar este móvil?"
+          }
+        }
+      }
+    },
+    "Use arrow buttons": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar flechas"
+          }
+        }
+      }
+    },
+    "Use as the channel list": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar como lista de canales"
+          }
+        }
+      }
+    },
+    "Use the Channels tab or the remote.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa la pestaña Canales o el mando."
+          }
+        }
+      }
+    },
+    "Use touch surface": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar superficie táctil"
+          }
+        }
+      }
+    },
+    "Use your iPhone as the remote, keyboard and channel guide for Mi IPTV on your TV.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa tu iPhone como mando, teclado y guía de canales de Mi IPTV en tu tele."
+          }
+        }
+      }
+    },
+    "VOL": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VOL"
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión"
+          }
+        }
+      }
+    },
+    "Watch": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver"
+          }
+        }
+      }
+    },
+    "Watch on the TV": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver en la tele"
+          }
+        }
+      }
+    },
+    "What you type shows up on the TV as a search. Pick a result here or with the remote.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lo que escribas aparece en la tele como búsqueda. Elige un resultado aquí o con el mando."
+          }
+        }
+      }
+    },
+    "When the TV has loaded your playlist, the channels appear here.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando la tele cargue tu lista, los canales aparecerán aquí."
+          }
+        }
+      }
+    },
+    "You can also forget all phones from the setup page on your computer.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "También puedes olvidar todos los móviles desde la página de configuración en tu ordenador."
+          }
+        }
+      }
+    },
+    "You'll need a new code from the TV to use it as a remote again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Necesitarás un código nuevo de la tele para volver a usarlo como mando."
+          }
+        }
+      }
+    },
+    "“%@” is showing a %@-digit code.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%1$@» muestra un código de %2$@ cifras."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

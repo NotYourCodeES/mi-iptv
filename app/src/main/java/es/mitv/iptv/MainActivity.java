@@ -3,10 +3,14 @@ package es.mitv.iptv;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -53,25 +57,37 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import es.mitv.iptv.core.Channel;
+import es.mitv.iptv.core.ChannelSearch;
 import es.mitv.iptv.core.ConfigServer;
 import es.mitv.iptv.core.IptvConfig;
+import es.mitv.iptv.core.LogoCache;
 import es.mitv.iptv.core.M3uParser;
+import es.mitv.iptv.core.Pairing;
+import es.mitv.iptv.core.RemoteApi;
 
 @OptIn(markerClass = UnstableApi.class)
 public class MainActivity extends Activity implements ConfigServer.Listener {
 
-    static final String USER_AGENT = "MiIPTV/1.3.1 (Android TV)";
+    static final String APP_VERSION = "1.4.0";
+    static final String USER_AGENT = "MiIPTV/" + APP_VERSION + " (Android TV)";
     private static final String CACHE_FILE = "playlist.m3u";
     private static final long PREVIEW_DELAY_MS = 650;
     private static final long EXIT_WINDOW_MS = 2500;
     private static final long OSD_MS = 5000;
+    private static final long NUMBER_ENTRY_MS = 1800;
+    private static final String SEARCH_GROUP = "\u0000search";
 
-    private static final int TYPE_FAV = 0, TYPE_ALL = 1, TYPE_GROUP = 2;
+    private static final int TYPE_FAV = 0, TYPE_ALL = 1, TYPE_GROUP = 2, TYPE_SEARCH = 3;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -80,6 +96,9 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private SharedPreferences prefs;
     private ExoPlayer player;
     private ConfigServer server;
+    private RemoteApi remote;
+    private RemoteDiscovery discovery;
+    private AudioManager audio;
     private ImageLoader images;
 
     // Views
@@ -91,6 +110,9 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private TextView osdNumber, osdName, osdGroup, osdClock, osdFav, osdInitial;
     private ImageView osdLogo, welcomeQr;
     private TextView welcomeTitle, welcomeText, welcomeUrl, welcomeStatus;
+    private TextView channelsEmpty, numberEntry;
+    private View pairingOverlay;
+    private TextView pairingCode, pairingText;
 
     private GroupAdapter groupAdapter;
     private ChannelAdapter channelAdapter;
@@ -99,13 +121,19 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private volatile IptvConfig config;
     private volatile String status = "";
     private boolean loading;
-    private List<Channel> allChannels = Collections.emptyList();
+    private volatile List<Channel> allChannels = Collections.emptyList();
     private final List<GroupItem> groups = new ArrayList<>();
     private int currentGroup = -1;
     private List<Channel> shownChannels = new ArrayList<>();
     private List<Channel> zapList = new ArrayList<>();
     private int zapIndex = -1;
     private Channel committed;      // channel currently being watched
+    private Channel previous;       // the one before it (Last channel button)
+    private boolean paused;
+    private boolean started;
+    private String searchQuery;     // search typed from the phone, shown as a category
+    private int channelsVersion;
+    private final StringBuilder typedNumber = new StringBuilder();
     private String loadedUrl;       // what the player has loaded right now (may be a preview)
     private Set<String> favs = new HashSet<>();
     private boolean retried;
@@ -115,6 +143,8 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
 
     private final Runnable hideOsd = () -> osd.setVisibility(View.GONE);
     private final Runnable hideToast = () -> toastText.setVisibility(View.GONE);
+    private final Runnable hidePairing = () -> pairingOverlay.setVisibility(View.GONE);
+    private final Runnable goToTypedNumber = this::goToTypedNumber;
     private final Runnable previewTask = () -> {
         if (pendingPreview != null && panel.getVisibility() == View.VISIBLE) load(pendingPreview.url);
     };
@@ -138,6 +168,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         config = loadConfig();
         favs = new HashSet<>(prefs.getStringSet("favs", Collections.<String>emptySet()));
         images = new ImageLoader(dp(96), USER_AGENT);
+        audio = (AudioManager) getSystemService(AUDIO_SERVICE);
 
         bindViews();
         setupPlayer();
@@ -160,7 +191,12 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         osd = findViewById(R.id.osd);
         groupList = findViewById(R.id.groupList);
         channelList = findViewById(R.id.channelList);
-        channelList.setEmptyView(findViewById(R.id.channelsEmpty));
+        channelsEmpty = findViewById(R.id.channelsEmpty);
+        channelList.setEmptyView(channelsEmpty);
+        numberEntry = findViewById(R.id.numberEntry);
+        pairingOverlay = findViewById(R.id.pairingOverlay);
+        pairingCode = findViewById(R.id.pairingCode);
+        pairingText = findViewById(R.id.pairingText);
         statusText = findViewById(R.id.statusText);
         clockText = findViewById(R.id.clockText);
         footerUrl = findViewById(R.id.footerUrl);
@@ -233,6 +269,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         }
         loadedUrl = url;
         retried = false;
+        paused = false;
         MediaItem.Builder item = new MediaItem.Builder().setUri(Uri.parse(url));
         String lower = url.toLowerCase(Locale.ROOT);
         if (lower.contains(".m3u8") || lower.contains("output=hls")) item.setMimeType(MimeTypes.APPLICATION_M3U8);
@@ -246,11 +283,14 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         if (list.isEmpty()) return;
         zapList = list;
         zapIndex = ((index % list.size()) + list.size()) % list.size();
-        committed = zapList.get(zapIndex);
+        Channel next = zapList.get(zapIndex);
+        if (committed != null && committed != next) previous = committed;
+        committed = next;
         load(committed.url);
         String groupName = (currentGroup >= 0 && currentGroup < groups.size()) ? groups.get(currentGroup).name : null;
         prefs.edit().putString("lastUrl", committed.url).putString("lastGroup", groupName).apply();
         channelAdapter.notifyDataSetChanged();
+        notifyState();
     }
 
     private void zap(int delta) {
@@ -300,6 +340,10 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         if (g.type == TYPE_FAV) {
             Set<String> seen = new HashSet<>();
             for (Channel c : allChannels) if (favs.contains(c.name) && seen.add(c.name)) list.add(c);
+            channelsEmpty.setText(R.string.favorites_empty);
+        } else if (g.type == TYPE_SEARCH) {
+            list.addAll(ChannelSearch.find(allChannels, searchQuery));
+            channelsEmpty.setText(getString(R.string.search_empty, searchQuery));
         } else if (g.type == TYPE_ALL) {
             list.addAll(allChannels);
         } else {
@@ -354,14 +398,16 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         showPreviewInfo(committed);
         if (!shownChannels.isEmpty()) channelList.requestFocus();
         else groupList.requestFocus();
+        notifyState();
     }
 
     /** Opens the list straight on Favorites (Guide button on the remote). */
     private void showFavorites() {
         if (allChannels.isEmpty()) return;
         if (!panelOpen()) showPanel();
-        selectGroup(0);
-        groupList.setSelection(0);
+        int fav = indexOfType(TYPE_FAV);
+        selectGroup(fav);
+        groupList.setSelection(fav);
         if (!shownChannels.isEmpty()) {
             channelList.requestFocus();
             onChannelHighlighted(channelList.getSelectedItemPosition());
@@ -378,6 +424,13 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         panel.setVisibility(View.GONE);
         PlayerView.switchTargetView(player, playerPreview, playerFull);
         load(committed.url); // if another channel was being previewed, go back to the one being watched
+        // A search from the phone is temporary: it goes away once you are watching something
+        if (searchQuery != null) {
+            searchQuery = null;
+            rebuildGroups();
+            if (currentGroup < 0) selectGroup(defaultGroup());
+        }
+        notifyState();
     }
 
     private boolean panelOpen() { return panel.getVisibility() == View.VISIBLE; }
@@ -389,11 +442,19 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private int defaultGroup() {
         String last = prefs.getString("lastGroup", null);
         for (int i = 0; i < groups.size(); i++) if (groups.get(i).name.equals(last)) return i;
-        return (groups.size() > 0 && groups.get(0).count > 0) ? 0 : 1; // Favorites if any, otherwise All channels
+        int fav = indexOfType(TYPE_FAV);
+        return groups.get(fav).count > 0 ? fav : indexOfType(TYPE_ALL); // Favorites if any, otherwise All channels
+    }
+
+    private int indexOfType(int type) {
+        for (int i = 0; i < groups.size(); i++) if (groups.get(i).type == type) return i;
+        return 0;
     }
 
     private void setChannels(List<Channel> channels) {
         allChannels = channels;
+        searchQuery = null;
+        channelsVersion++;
         rebuildGroups();
         currentGroup = -1;
         selectGroup(defaultGroup());
@@ -408,9 +469,12 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         } else {
             showPanel();
         }
+        if (remote != null) remote.publishChannelsChanged(channelsVersion);
     }
 
     private void rebuildGroups() {
+        // Keep the same category selected even if the positions move (search added or removed)
+        GroupItem selected = (currentGroup >= 0 && currentGroup < groups.size()) ? groups.get(currentGroup) : null;
         Map<String, Integer> counts = new HashMap<>();
         Set<String> favNames = new HashSet<>();
         for (Channel c : allChannels) {
@@ -419,9 +483,19 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             if (favs.contains(c.name)) favNames.add(c.name);
         }
         groups.clear();
+        if (searchQuery != null) {
+            groups.add(new GroupItem(SEARCH_GROUP, ChannelSearch.find(allChannels, searchQuery).size(), TYPE_SEARCH));
+        }
         groups.add(new GroupItem(getString(R.string.group_favorites), favNames.size(), TYPE_FAV));
         groups.add(new GroupItem(getString(R.string.group_all), allChannels.size(), TYPE_ALL));
         for (String g : M3uParser.groups(allChannels)) groups.add(new GroupItem(g, counts.get(g), TYPE_GROUP));
+        if (selected != null) {
+            currentGroup = -1;
+            for (int i = 0; i < groups.size(); i++) {
+                GroupItem g = groups.get(i);
+                if (g.type == selected.type && (g.type != TYPE_GROUP || g.name.equals(selected.name))) currentGroup = i;
+            }
+        }
         groupAdapter.notifyDataSetChanged();
     }
 
@@ -443,7 +517,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
 
         int selected = channelList.getSelectedItemPosition();
         rebuildGroups();
-        groupList.setItemChecked(currentGroup, true);
+        if (currentGroup >= 0) groupList.setItemChecked(currentGroup, true);
         if (currentGroup >= 0 && groups.get(currentGroup).type == TYPE_FAV) {
             selectGroup(currentGroup);
             if (!shownChannels.isEmpty()) {
@@ -456,6 +530,8 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         }
         if (panelOpen()) showPreviewInfo(c);
         if (osd.getVisibility() == View.VISIBLE) showOsd();
+        if (remote != null) remote.publishFavorites(new ArrayList<>(favs));
+        notifyState();
     }
 
     private Channel highlightedChannel() {
@@ -471,8 +547,42 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
         boolean up = e.getAction() == KeyEvent.ACTION_UP;
 
-        if (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE) {
+        boolean backKey = code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE;
+        boolean volumeKey = code == KeyEvent.KEYCODE_VOLUME_UP || code == KeyEvent.KEYCODE_VOLUME_DOWN
+                || code == KeyEvent.KEYCODE_VOLUME_MUTE;
+
+        // Pairing code on screen: Back cancels it, everything else waits
+        if (pairingOverlay.getVisibility() == View.VISIBLE && !volumeKey) {
+            if (backKey && up && !e.isCanceled()) {
+                if (remote != null) remote.pairing().cancel();
+                hidePairingOverlay();
+            }
+            return true;
+        }
+
+        if (backKey) {
             if (up && !e.isCanceled()) handleBack();
+            return true;
+        }
+
+        // Number keys: type a channel number (it switches after a short pause)
+        int digit = digitOf(code);
+        if (digit >= 0 && !allChannels.isEmpty()) {
+            if (down && e.getRepeatCount() == 0) typeDigit(digit);
+            return true;
+        }
+
+        if (code == KeyEvent.KEYCODE_LAST_CHANNEL) {
+            if (down && e.getRepeatCount() == 0) goToPrevious();
+            return true;
+        }
+
+        boolean playKey = code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || code == KeyEvent.KEYCODE_MEDIA_PLAY
+                || code == KeyEvent.KEYCODE_MEDIA_PAUSE;
+        if (playKey && committed != null) {
+            if (down && e.getRepeatCount() == 0) {
+                setPaused(code == KeyEvent.KEYCODE_MEDIA_PAUSE || (code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && !paused));
+            }
             return true;
         }
 
@@ -547,7 +657,8 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             return;
         }
         if (fullscreen()) {
-            showPanel();
+            if (!allChannels.isEmpty()) showPanel();
+            else stopSharedStream(); // a link sent from the phone before any playlist was set up
             return;
         }
         long now = System.currentTimeMillis();
@@ -564,7 +675,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private void showOsd() {
         if (committed == null) return;
         Channel c = committed;
-        osdNumber.setText(String.valueOf(c.number));
+        osdNumber.setText(c.number > 0 ? String.valueOf(c.number) : "");
         osdName.setText(c.name);
         osdGroup.setText(groupLabel(this, c.group));
         osdFav.setVisibility(favs.contains(c.name) ? View.VISIBLE : View.GONE);
@@ -576,6 +687,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     }
 
     private void toast(String text) {
+        if (remote != null) remote.publishToast(text);
         toastText.setText(text);
         toastText.setVisibility(View.VISIBLE);
         ui.removeCallbacks(hideToast);
@@ -686,8 +798,22 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         if (server != null) return;
         try {
             ConfigServer s = new ConfigServer(ConfigServer.DEFAULT_PORT, readAsset("config.html"), this);
+            if (remote == null) {
+                remote = new RemoteApi(new PhoneRemote(), new Pairing(new PrefsDeviceStore()),
+                        new LogoCache(8 * 1024 * 1024, USER_AGENT));
+            }
+            s.setRemote(remote);
             s.start();
             server = s;
+            // Let the phone app find the TV without typing its address
+            if (discovery == null) discovery = new RemoteDiscovery(this);
+            Map<String, String> txt = new HashMap<>();
+            txt.put("id", tvId());
+            txt.put("api", String.valueOf(RemoteApi.API_VERSION));
+            txt.put("port", String.valueOf(s.getPort()));
+            String ip = localIp();
+            if (ip != null) txt.put("ip", ip);
+            discovery.register(tvName(), s.getPort(), txt);
         } catch (IOException e) {
             server = null;
         }
@@ -740,6 +866,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private void setStatus(String s) {
         status = s;
         refreshTexts();
+        notifyState();
     }
 
     private String configUrl() {
@@ -759,7 +886,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private String qrFor;
 
     private void updateWelcome() {
-        boolean show = allChannels.isEmpty();
+        boolean show = allChannels.isEmpty() && committed == null;
         welcome.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show) return;
         String url = configUrl();
@@ -812,25 +939,438 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     @Override
     protected void onStart() {
         super.onStart();
+        started = true;
         startServer();
-        if (loadedUrl != null) { player.prepare(); player.play(); }
+        if (loadedUrl != null) { paused = false; player.prepare(); player.play(); }
         refreshTexts();
+        notifyState();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        started = false;
         if (player != null) player.stop();
+        notifyState();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (discovery != null) discovery.unregister();
+        if (remote != null) remote.close();
         if (server != null) server.stop();
         if (player != null) player.release();
         images.shutdown();
         io.shutdownNow();
         ui.removeCallbacksAndMessages(null);
+    }
+
+    // ---------------------------------------------------------------- Extra controls (remote and phone)
+
+    private static int digitOf(int code) {
+        if (code >= KeyEvent.KEYCODE_0 && code <= KeyEvent.KEYCODE_9) return code - KeyEvent.KEYCODE_0;
+        if (code >= KeyEvent.KEYCODE_NUMPAD_0 && code <= KeyEvent.KEYCODE_NUMPAD_9) return code - KeyEvent.KEYCODE_NUMPAD_0;
+        return -1;
+    }
+
+    /** Builds a channel number digit by digit, like on a regular TV. */
+    private void typeDigit(int digit) {
+        if (typedNumber.length() == 0 && digit == 0) return;
+        if (typedNumber.length() >= 5) return;
+        typedNumber.append(digit);
+        numberEntry.setText(typedNumber);
+        numberEntry.setVisibility(View.VISIBLE);
+        ui.removeCallbacks(goToTypedNumber);
+        // Switch at once when no longer number is possible, otherwise wait for more digits
+        int maxDigits = String.valueOf(allChannels.size()).length();
+        if (typedNumber.length() >= maxDigits) goToTypedNumber();
+        else ui.postDelayed(goToTypedNumber, NUMBER_ENTRY_MS);
+    }
+
+    private void goToTypedNumber() {
+        ui.removeCallbacks(goToTypedNumber);
+        numberEntry.setVisibility(View.GONE);
+        if (typedNumber.length() == 0) return;
+        int n = Integer.parseInt(typedNumber.toString());
+        typedNumber.setLength(0);
+        Channel c = channelByNumber(n);
+        if (c == null) toast(getString(R.string.toast_no_channel_number, n));
+        else playChannel(c);
+    }
+
+    private Channel channelByNumber(int n) {
+        List<Channel> list = allChannels;
+        if (n >= 1 && n <= list.size() && list.get(n - 1).number == n) return list.get(n - 1);
+        for (Channel c : list) if (c.number == n) return c;
+        return null;
+    }
+
+    /** Watches a channel, zapping within the current list if it is there, otherwise within All channels. */
+    private void playChannel(Channel c) {
+        int idx = zapList.indexOf(c);
+        if (idx >= 0) {
+            commit(zapList, idx);
+        } else {
+            selectGroup(indexOfType(TYPE_ALL));
+            commit(allChannels, allChannels.indexOf(c));
+        }
+        if (panelOpen()) hidePanel();
+        showOsd();
+    }
+
+    private void goToPrevious() {
+        Channel p = previous;
+        if (p == null) {
+            toast(getString(R.string.toast_no_previous));
+            return;
+        }
+        if (p.number > 0 && allChannels.contains(p)) playChannel(p);
+        else if (p.number == 0) playShared(p.url, p.name);
+    }
+
+    /**
+     * Pauses a live channel. Resuming goes back to the live picture, which is what people
+     * expect from TV (and the stream may not keep a buffer anyway).
+     */
+    private void setPaused(boolean pause) {
+        if (committed == null || pause == paused) return;
+        paused = pause;
+        if (pause) {
+            player.pause();
+            toast(getString(R.string.toast_paused));
+        } else {
+            player.stop();
+            player.prepare();
+            player.play();
+            showOsd();
+        }
+        notifyState();
+    }
+
+    private void adjustVolume(int direction) {
+        if (audio != null) audio.adjustSuggestedStreamVolume(direction, AudioManager.STREAM_MUSIC, AudioManager.FLAG_SHOW_UI);
+    }
+
+    /** Plays a link sent from the phone without touching the playlist. */
+    private void playShared(String url, String title) {
+        String name = title != null && !title.trim().isEmpty() ? title.trim() : Uri.parse(url).getHost();
+        if (name == null || name.isEmpty()) name = getString(R.string.shared_default_name);
+        Channel c = new Channel(name, getString(R.string.group_shared), null, url, 0);
+        if (committed != null && committed != c) previous = committed;
+        committed = c;
+        load(url);
+        if (panelOpen()) hidePanel();
+        updateWelcome();
+        channelAdapter.notifyDataSetChanged();
+        showOsd();
+        notifyState();
+    }
+
+    private void stopSharedStream() {
+        committed = null;
+        loadedUrl = null;
+        player.stop();
+        player.clearMediaItems();
+        osd.setVisibility(View.GONE);
+        updateWelcome();
+        notifyState();
+    }
+
+    /** Shows the channels matching what is typed on the phone, as a category at the top of the list. */
+    private void applySearch(String q) {
+        String query = q == null ? "" : q.trim();
+        if (allChannels.isEmpty()) return;
+        if (query.isEmpty()) {
+            if (searchQuery == null) return;
+            searchQuery = null;
+            rebuildGroups();
+            if (currentGroup < 0) selectGroup(defaultGroup());
+            if (panelOpen()) {
+                groupList.setSelection(currentGroup);
+                groupList.setItemChecked(currentGroup, true);
+            }
+            notifyState();
+            return;
+        }
+        searchQuery = query;
+        rebuildGroups();
+        if (!panelOpen()) showPanel();
+        int idx = indexOfType(TYPE_SEARCH);
+        selectGroup(idx);
+        groupList.setSelection(idx);
+        if (!shownChannels.isEmpty()) {
+            channelList.setSelection(0);
+            channelList.requestFocus();
+            onChannelHighlighted(0);
+        } else {
+            groupList.requestFocus();
+        }
+        notifyState();
+    }
+
+    // ---------------------------------------------------------------- Pairing a phone
+
+    private void showPairingOverlay(String pin, String device) {
+        StringBuilder spaced = new StringBuilder();
+        for (int i = 0; i < pin.length(); i++) {
+            if (i > 0) spaced.append(' ');
+            spaced.append(pin.charAt(i));
+        }
+        pairingCode.setText(spaced);
+        pairingText.setText(getString(R.string.pair_text, device));
+        pairingOverlay.setVisibility(View.VISIBLE);
+        ui.removeCallbacks(hidePairing);
+        ui.postDelayed(hidePairing, Pairing.PIN_VALID_MS);
+    }
+
+    private void hidePairingOverlay() {
+        ui.removeCallbacks(hidePairing);
+        pairingOverlay.setVisibility(View.GONE);
+    }
+
+    /** Remembers paired phones in the app preferences ("token TAB name" per line, oldest first). */
+    private final class PrefsDeviceStore implements Pairing.Store {
+        @Override
+        public Map<String, String> load() {
+            Map<String, String> m = new LinkedHashMap<>();
+            String raw = prefs.getString("remoteDevices", "");
+            for (String line : raw.split("\n")) {
+                int tab = line.indexOf('\t');
+                if (tab > 0) m.put(line.substring(0, tab), line.substring(tab + 1));
+            }
+            return m;
+        }
+
+        @Override
+        public void save(Map<String, String> devices) {
+            StringBuilder b = new StringBuilder();
+            for (Map.Entry<String, String> e : devices.entrySet()) {
+                if (b.length() > 0) b.append('\n');
+                b.append(e.getKey()).append('\t').append(e.getValue());
+            }
+            prefs.edit().putString("remoteDevices", b.toString()).apply();
+        }
+    }
+
+    private String tvId() {
+        String id = prefs.getString("tvId", null);
+        if (id == null) {
+            id = UUID.randomUUID().toString();
+            prefs.edit().putString("tvId", id).apply();
+        }
+        return id;
+    }
+
+    private String tvName() {
+        String name = null;
+        if (Build.VERSION.SDK_INT >= 25) name = Settings.Global.getString(getContentResolver(), Settings.Global.DEVICE_NAME);
+        if (name == null || name.trim().isEmpty()) name = Build.MODEL;
+        return name == null || name.trim().isEmpty() ? "Android TV" : name.trim();
+    }
+
+    // ---------------------------------------------------------------- What the phone sees
+
+    /** Tells connected phones what is on screen. Call on the UI thread after anything visible changes. */
+    private void notifyState() {
+        if (remote != null && remote.connectedPhones() > 0) remote.publishState(stateJson());
+    }
+
+    private String stateJson() {
+        String screen = !started ? "background"
+                : welcome.getVisibility() == View.VISIBLE ? "welcome"
+                : panelOpen() ? "list" : "full";
+        String url = configUrl();
+        return "{\"screen\":" + ConfigServer.json(screen)
+                + ",\"channel\":" + (committed != null ? channelJson(committed) : "null")
+                + ",\"paused\":" + paused
+                + ",\"loading\":" + loading
+                + ",\"configured\":" + config.isComplete()
+                + ",\"status\":" + ConfigServer.json(status)
+                + ",\"channelCount\":" + allChannels.size()
+                + ",\"version\":" + channelsVersion
+                + ",\"search\":" + (searchQuery != null ? ConfigServer.json(searchQuery) : "null")
+                + ",\"setupUrl\":" + (url != null ? ConfigServer.json(url) : "null") + "}";
+    }
+
+    private String channelJson(Channel c) {
+        return "{\"n\":" + c.number
+                + ",\"name\":" + ConfigServer.json(c.name)
+                + ",\"group\":" + ConfigServer.json(groupLabel(this, c.group))
+                + ",\"logo\":" + (c.logo != null && !c.logo.isEmpty() ? ConfigServer.json(c.logo) : "null")
+                + ",\"fav\":" + favs.contains(c.name) + "}";
+    }
+
+    /** Runs on the UI thread and waits for the result (used by the server threads). */
+    private <T> T onUi(Callable<T> task, T fallback) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            try { return task.call(); } catch (Exception e) { return fallback; }
+        }
+        FutureTask<T> f = new FutureTask<>(task);
+        ui.post(f);
+        try {
+            return f.get(3, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    /** Bridge between the phone API (server threads) and the TV screen (UI thread). */
+    private final class PhoneRemote implements RemoteApi.Tv {
+
+        @Override public String tvId() { return MainActivity.this.tvId(); }
+        @Override public String tvName() { return MainActivity.this.tvName(); }
+        @Override public String appVersion() { return APP_VERSION; }
+
+        @Override
+        public void showPairingCode(String pin, String deviceName) {
+            ui.post(() -> showPairingOverlay(pin, deviceName));
+        }
+
+        @Override
+        public void hidePairingCode() {
+            ui.post(MainActivity.this::hidePairingOverlay);
+        }
+
+        @Override
+        public void onDevicePaired(String deviceName) {
+            ui.post(() -> toast(getString(R.string.toast_phone_paired, deviceName)));
+        }
+
+        @Override
+        public String key(String key) {
+            return onUi(() -> {
+                switch (key) {
+                    case "volup": adjustVolume(AudioManager.ADJUST_RAISE); return null;
+                    case "voldown": adjustVolume(AudioManager.ADJUST_LOWER); return null;
+                    case "mute":
+                        if (Build.VERSION.SDK_INT >= 23) adjustVolume(AudioManager.ADJUST_TOGGLE_MUTE);
+                        return null;
+                    default:
+                        break;
+                }
+                if (!started) return getString(R.string.remote_open_app);
+                int code = keyCode(key);
+                if (code == KeyEvent.KEYCODE_UNKNOWN) return null;
+                long t = SystemClock.uptimeMillis();
+                dispatchKeyEvent(new KeyEvent(t, t, KeyEvent.ACTION_DOWN, code, 0));
+                dispatchKeyEvent(new KeyEvent(t, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, code, 0));
+                return null;
+            }, getString(R.string.remote_busy));
+        }
+
+        @Override
+        public String play(int number) {
+            return onUi(() -> {
+                if (!started) return getString(R.string.remote_open_app);
+                Channel c = channelByNumber(number);
+                if (c == null) return getString(R.string.toast_no_channel_number, number);
+                playChannel(c);
+                return null;
+            }, getString(R.string.remote_busy));
+        }
+
+        @Override
+        public Boolean favorite(int number, Boolean on) {
+            return onUi(() -> {
+                Channel c = channelByNumber(number);
+                if (c == null) return null;
+                boolean is = favs.contains(c.name);
+                if (on == null || on != is) toggleFavorite(c);
+                return favs.contains(c.name);
+            }, null);
+        }
+
+        @Override
+        public void search(String query) {
+            ui.post(() -> { if (started) applySearch(query); });
+        }
+
+        @Override
+        public String share(String url, String title, boolean asPlaylist) {
+            return onUi(() -> {
+                if (asPlaylist) {
+                    IptvConfig cfg = new IptvConfig();
+                    cfg.mode = IptvConfig.MODE_M3U;
+                    cfg.m3uUrl = url;
+                    return onConfigSaved(cfg);
+                }
+                if (!started) return getString(R.string.remote_open_app);
+                playShared(url, title);
+                return getString(R.string.remote_shared_playing);
+            }, getString(R.string.remote_busy));
+        }
+
+        @Override
+        public String reload() {
+            return onReload();
+        }
+
+        @Override
+        public String stateJson() {
+            return onUi(MainActivity.this::stateJson, "{}");
+        }
+
+        @Override
+        public String channelsJson() {
+            // Take a consistent snapshot on the UI thread, build the (possibly large) JSON here
+            Object[] snap = onUi(() -> new Object[]{allChannels, new HashSet<>(favs), channelsVersion}, null);
+            if (snap == null) return "{\"version\":0,\"groups\":[],\"channels\":[],\"favorites\":[]}";
+            @SuppressWarnings("unchecked") List<Channel> list = (List<Channel>) snap[0];
+            @SuppressWarnings("unchecked") Set<String> favNames = (Set<String>) snap[1];
+            int version = (Integer) snap[2];
+
+            List<String> groupNames = M3uParser.groups(list);
+            Map<String, Integer> groupIndex = new HashMap<>();
+            List<String> labels = new ArrayList<>();
+            for (String g : groupNames) {
+                groupIndex.put(g, labels.size());
+                labels.add(groupLabel(MainActivity.this, g));
+            }
+            StringBuilder b = new StringBuilder(list.size() * 96 + 256);
+            b.append("{\"version\":").append(version);
+            b.append(",\"groups\":").append(RemoteApi.jsonArray(labels));
+            b.append(",\"channels\":[");
+            for (int i = 0; i < list.size(); i++) {
+                Channel c = list.get(i);
+                if (i > 0) b.append(',');
+                b.append("{\"n\":").append(c.number)
+                        .append(",\"name\":").append(ConfigServer.json(c.name))
+                        .append(",\"g\":").append(groupIndex.get(c.group));
+                if (c.logo != null && !c.logo.isEmpty()) b.append(",\"logo\":").append(ConfigServer.json(c.logo));
+                b.append('}');
+            }
+            b.append("],\"favorites\":").append(RemoteApi.jsonArray(new ArrayList<>(favNames))).append('}');
+            return b.toString();
+        }
+
+        @Override
+        public String logoUrl(int number) {
+            Channel c = channelByNumber(number);
+            return c != null && c.logo != null && !c.logo.isEmpty() ? c.logo : null;
+        }
+    }
+
+    private static int keyCode(String key) {
+        switch (key) {
+            case "up": return KeyEvent.KEYCODE_DPAD_UP;
+            case "down": return KeyEvent.KEYCODE_DPAD_DOWN;
+            case "left": return KeyEvent.KEYCODE_DPAD_LEFT;
+            case "right": return KeyEvent.KEYCODE_DPAD_RIGHT;
+            case "ok": return KeyEvent.KEYCODE_DPAD_CENTER;
+            case "back": return KeyEvent.KEYCODE_BACK;
+            case "menu": return KeyEvent.KEYCODE_MENU;
+            case "info": return KeyEvent.KEYCODE_INFO;
+            case "guide": return KeyEvent.KEYCODE_GUIDE;
+            case "fav": return KeyEvent.KEYCODE_PROG_YELLOW;
+            case "chup": return KeyEvent.KEYCODE_CHANNEL_UP;
+            case "chdown": return KeyEvent.KEYCODE_CHANNEL_DOWN;
+            case "last": return KeyEvent.KEYCODE_LAST_CHANNEL;
+            case "playpause": return KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
+            default:
+                if (key.length() == 1 && Character.isDigit(key.charAt(0))) return KeyEvent.KEYCODE_0 + (key.charAt(0) - '0');
+                return KeyEvent.KEYCODE_UNKNOWN;
+        }
     }
 
     // ---------------------------------------------------------------- Adapters
@@ -846,8 +1386,9 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             this.type = type;
         }
 
-        String label(Activity a) {
+        String label(MainActivity a) {
             if (type == TYPE_FAV) return "★  " + name;
+            if (type == TYPE_SEARCH) return a.getString(R.string.group_search, a.searchQuery);
             return groupLabel(a, name);
         }
     }

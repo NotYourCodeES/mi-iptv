@@ -41,7 +41,7 @@
 
     <!-- Channel banner -->
     <string name="osd_live">LIVE</string>
-    <string name="osd_hints">OK  list   ·   ▲▼  switch   ·   Guide  favorites</string>
+    <string name="osd_hints">OK  list   ·   ▲▼  switch   ·   0–9  number   ·   Guide  favorites</string>
 
     <!-- Setup -->
     <string name="footer_setup">Setup:  %s</string>
@@ -59,4 +59,23 @@
     <string name="welcome_error_text">Check your provider details at this address:</string>
     <string name="welcome_port_busy">Port 8080 is busy</string>
     <string name="welcome_no_network">The TV is not connected to a network</string>
+
+    <!-- Extra remote controls -->
+    <string name="toast_no_channel_number">There is no channel %d</string>
+    <string name="toast_no_previous">No previous channel yet</string>
+    <string name="toast_paused">Paused · press Play to go back to live</string>
+    <string name="group_search">Search “%s”</string>
+    <string name="search_empty">No channels match “%s”</string>
+    <string name="group_shared">Sent from the phone</string>
+    <string name="shared_default_name">Shared stream</string>
+
+    <!-- Phone remote -->
+    <string name="pair_badge">PHONE REMOTE</string>
+    <string name="pair_title">Connect your phone</string>
+    <string name="pair_text">Type this code on “%s”</string>
+    <string name="pair_hint">The code expires in 2 minutes  ·  Back to cancel</string>
+    <string name="toast_phone_paired">“%s” is now connected as a remote</string>
+    <string name="remote_open_app">Open Mi IPTV on the TV first</string>
+    <string name="remote_busy">The TV is busy, try again</string>
+    <string name="remote_shared_playing">Playing on the TV</string>
 </resources>

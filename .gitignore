@@ -17,3 +17,8 @@ keystore.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/

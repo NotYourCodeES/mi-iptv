@@ -1,0 +1,56 @@
+# Optional: regenerates MiIPTVRemote.xcodeproj with XcodeGen (brew install xcodegen && xcodegen)
+# if the committed project ever gives you trouble. Normally you can just open the .xcodeproj.
+name: MiIPTVRemote
+options:
+  bundleIdPrefix: es.notyourcode.miiptv
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+targets:
+  MiIPTVRemote:
+    type: application
+    platform: iOS
+    sources:
+      - MiIPTVRemote
+      - Shared
+    dependencies:
+      - target: ShareExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: es.notyourcode.miiptv.remote
+        INFOPLIST_FILE: Support/MiIPTVRemote-Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: Support/MiIPTVRemote.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_CFBundleDisplayName: Mi IPTV Remote
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.entertainment
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Mi IPTV Remote looks for your TV on the Wi-Fi so you can control it.
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+  ShareExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ShareExtension
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: es.notyourcode.miiptv.remote.share
+        INFOPLIST_FILE: Support/ShareExtension-Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: Support/ShareExtension.entitlements
+        INFOPLIST_KEY_CFBundleDisplayName: Mi IPTV
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Mi IPTV sends the link to your TV on the Wi-Fi.

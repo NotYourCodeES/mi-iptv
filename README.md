@@ -26,6 +26,7 @@ Typing long playlist URLs and passwords with a TV remote is painful. Mi IPTV run
 - **Setup from any device on your network.** A built-in web page (and a QR code on the TV) to enter an M3U URL or Xtream Codes server, username and password.
 - **Live preview.** While you browse the list, the highlighted channel plays in a small window; press OK to go full screen.
 - **Favorites.** Long-press OK on any channel to add it to favorites. The remote's **Guide** button jumps straight to them.
+- **iPhone remote app (optional).** [Mi IPTV Remote](ios/) finds the TV on your Wi-Fi and turns your phone into a touch remote, a keyboard to search channels, a channel list with logos, and a Share target to send links from Safari straight to the TV. The TV works exactly the same without it.
 - **Designed for the remote.** Up/Down and CH+/CH− switch channels, Back never closes the app by accident, and a banner shows the channel's logo, number and category.
 - **Channel logos** loaded and cached in memory with a small custom image loader (no image library needed).
 - **Dolby audio support.** Ships an FFmpeg audio decoder so AC-3 / E-AC-3 channels play with sound even on TVs whose system decoders don't expose them to apps.
@@ -53,6 +54,9 @@ flowchart LR
 | [`core/ConfigServer.java`](app/src/main/java/es/mitv/iptv/core/ConfigServer.java) | Dependency-free HTTP server for the setup page and its small JSON API |
 | [`core/M3uParser.java`](app/src/main/java/es/mitv/iptv/core/M3uParser.java) | M3U / `m3u_plus` parser (names, groups, logos) |
 | [`core/IptvConfig.java`](app/src/main/java/es/mitv/iptv/core/IptvConfig.java) | M3U vs Xtream Codes settings and playlist URL building |
+| [`core/RemoteApi.java`](app/src/main/java/es/mitv/iptv/core/RemoteApi.java) | JSON API and live event stream for the phone app, under `/api/remote/` |
+| [`core/Pairing.java`](app/src/main/java/es/mitv/iptv/core/Pairing.java) | PIN pairing and per-phone tokens |
+| [`RemoteDiscovery.java`](app/src/main/java/es/mitv/iptv/RemoteDiscovery.java) | Announces the TV on the network (mDNS / Bonjour) for the phone app |
 | [`ImageLoader.java`](app/src/main/java/es/mitv/iptv/ImageLoader.java) | Async logo download with an in-memory LRU cache |
 | [`assets/config.html`](app/src/main/assets/config.html) | The setup web page (vanilla HTML/CSS/JS, bilingual) |
 
@@ -112,12 +116,27 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 | **Left / Right** | Open the channel list | Switch between categories and channels |
 | **Guide** (or blue) | Open favorites | Open favorites |
 | **Back** | Open the channel list | Return to the channel you were watching |
+| **0–9** | Type a channel number | Type a channel number |
+| **Last channel** | Previous channel | Previous channel |
+| **Play / Pause** | Pause; press again to go back to live | — |
+
+## iPhone remote
+
+The optional [iPhone app](ios/) works on the same network as the TV:
+
+- **Remote**: an Apple TV-style touch surface (swipe to move, tap for OK, hold for favorite) or classic arrows, plus channel and volume rockers that repeat while held, play/pause, mute, last channel and a number pad.
+- **Keyboard**: type on the phone and the TV shows the matching channels as you type.
+- **Channels**: the full list with logos, categories and favorites. Tap a channel to watch it on the TV.
+- **Share**: in Safari or any app, *Share → Mi IPTV* plays a stream on the TV or loads a playlist.
+- **Pairing**: the TV shows a 4-digit code the first time. Paired phones can be forgotten from the setup page.
+
+See [`ios/README.md`](ios/README.md) to build and install it with Xcode.
 
 ## Roadmap
 
 - [ ] Electronic program guide (EPG / XMLTV): what's on now and next
-- [ ] Search channels from the remote or the setup page
-- [ ] Jump to a channel by typing its number
+- [x] Search channels (from the iPhone app)
+- [x] Jump to a channel by typing its number
 - [ ] Quick switch between the last two channels
 - [ ] Movies and series (VOD) for Xtream providers
 

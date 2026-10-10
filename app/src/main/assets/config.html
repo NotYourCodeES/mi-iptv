@@ -28,6 +28,11 @@
   .msg.err { display:block; background:rgba(229,83,75,.15); color:var(--err); }
   .status { margin-top:18px; color:var(--muted); font-size:14px; }
   .status b { color:var(--text); font-weight:600; }
+  .card + .card { margin-top:16px; }
+  .remote { display:flex; align-items:center; gap:14px; }
+  .remote .txt { flex:1; }
+  .remote h2 { font-size:16px; margin:0 0 2px; }
+  .remote p { margin:0; color:var(--muted); font-size:14px; }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -63,6 +68,13 @@
     <div class="msg" id="msg"></div>
     <div class="status"><span data-i18n="statusLabel">TV status:</span> <b id="status">…</b></div>
   </div>
+  <div class="card remote">
+    <div class="txt">
+      <h2 data-i18n="remoteTitle">Phone remote</h2>
+      <p id="devices" data-i18n="remoteNone">No phone is paired. Open the Mi IPTV Remote app on your iPhone to connect it.</p>
+    </div>
+    <button class="sec" type="button" id="forget" hidden data-i18n="forget">Forget all</button>
+  </div>
 </main>
 <script>
   // Interface texts: English by default, Spanish when the browser is in Spanish
@@ -72,13 +84,17 @@
           m3uHint: "The address your provider gave you. It usually ends in .m3u or .m3u8.", server: "Server",
           user: "Username", pass: "Password", passHint: "A password is already saved. Leave it blank to keep it.",
           save: "Save and send to TV", reload: "Reload channels", statusLabel: "TV status:",
-          offline: "no connection to the TV", unreachable: "Couldn't reach the TV. Is the app still open?" },
+          offline: "no connection to the TV", unreachable: "Couldn't reach the TV. Is the app still open?",
+          remoteTitle: "Phone remote", remoteNone: "No phone is paired. Open the Mi IPTV Remote app on your iPhone to connect it.",
+          remotePaired: "Paired: ", forget: "Forget all", forgotten: "Phones forgotten. They will need the code again." },
     es: { sub: "Escribe aquí los datos de tu proveedor. La tele los recibe al instante.", tabM3u: "Enlace M3U",
           tabXtream: "Usuario y contraseña", m3uLabel: "Enlace de la lista (M3U)",
           m3uHint: "Es la dirección que te dio tu proveedor y suele terminar en .m3u o .m3u8.", server: "Servidor",
           user: "Usuario", pass: "Contraseña", passHint: "Ya hay una contraseña guardada. Déjala en blanco para conservarla.",
           save: "Guardar y enviar a la tele", reload: "Recargar canales", statusLabel: "Estado de la tele:",
-          offline: "sin conexión con la tele", unreachable: "No se pudo contactar con la tele. ¿Sigue la app abierta?" }
+          offline: "sin conexión con la tele", unreachable: "No se pudo contactar con la tele. ¿Sigue la app abierta?",
+          remoteTitle: "Mando del móvil", remoteNone: "No hay ningún móvil emparejado. Abre la app Mi IPTV Remote en tu iPhone para conectarlo.",
+          remotePaired: "Emparejados: ", forget: "Olvidar todos", forgotten: "Móviles olvidados. Tendrán que volver a introducir el código." }
   };
   const lang = (navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
   const t = k => T[lang][k];
@@ -129,8 +145,23 @@
     try { const r = await fetch("/api/reload", { method:"POST" }); const j = await r.json(); show(j.ok, j.message); }
     catch (err) { show(false, t("unreachable")); }
   };
+  async function loadDevices() {
+    try {
+      const r = await fetch("/api/remote/devices");
+      const d = await r.json();
+      const has = d.devices && d.devices.length > 0;
+      $("devices").textContent = has ? t("remotePaired") + d.devices.join(", ") : t("remoteNone");
+      $("forget").hidden = !has;
+    } catch (e) { /* older TV app without the phone remote */ }
+  }
+  $("forget").onclick = async () => {
+    try { await fetch("/api/remote/devices/forget", { method:"POST" }); show(true, t("forgotten")); }
+    catch (err) { show(false, t("unreachable")); }
+    loadDevices();
+  };
   load(true);
-  setInterval(() => load(false), 3000);
+  loadDevices();
+  setInterval(() => { load(false); loadDevices(); }, 3000);
 </script>
 </body>
 </html>
