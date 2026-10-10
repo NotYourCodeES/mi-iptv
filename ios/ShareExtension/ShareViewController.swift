@@ -10,8 +10,9 @@ final class ShareViewController: UIViewController {
         view.backgroundColor = .clear
         Task { @MainActor in
             let (url, title) = await sharedLink()
-            let root = ShareView(url: url, title: title, tv: PairedTVStore.load()) { [weak self] in
-                self?.extensionContext?.completeRequest(returningItems: nil)
+            let context = extensionContext
+            let root = ShareView(url: url, title: title, tv: PairedTVStore.load()) {
+                context?.completeRequest(returningItems: nil)
             }
             let host = UIHostingController(rootView: root)
             host.view.backgroundColor = .clear

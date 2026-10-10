@@ -1,41 +1,53 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "CFBundleDisplayName": {
-      "comment": "Name under the app icon",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mi IPTV Remote"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Name under the app icon",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi IPTV Remote"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mi IPTV Remote"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi IPTV Remote"
           }
         }
       }
     },
-    "NSLocalNetworkUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mi IPTV Remote looks for your TV on the Wi-Fi so you can control it."
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "MiIPTVRemote"
+          }
+        }
+      }
+    },
+    "NSLocalNetworkUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi IPTV Remote looks for your TV on the Wi-Fi so you can control it."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mi IPTV Remote busca tu tele en la Wi-Fi para que puedas controlarla."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi IPTV Remote busca tu tele en la Wi-Fi para que puedas controlarla."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

@@ -88,10 +88,9 @@ final class Discovery {
                 ip.version = .v4
             }
             let connection = NWConnection(to: endpoint, using: params)
-            var finished = false
-            func finish(_ value: (host: String, port: Int)?) {
-                guard !finished else { return }
-                finished = true
+            let once = ResumeOnce()
+            let finish: @Sendable ((host: String, port: Int)?) -> Void = { value in
+                guard once.claim() else { return }
                 connection.cancel()
                 continuation.resume(returning: value)
             }
@@ -114,5 +113,19 @@ final class Discovery {
             connection.start(queue: queue)
             queue.asyncAfter(deadline: .now() + 5) { finish(nil) }
         }
+    }
+}
+
+/// Makes sure a continuation is resumed only once, whichever callback gets there first.
+private final class ResumeOnce: @unchecked Sendable {
+    private let lock = NSLock()
+    private var done = false
+
+    func claim() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if done { return false }
+        done = true
+        return true
     }
 }
