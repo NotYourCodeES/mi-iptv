@@ -37,8 +37,13 @@ jobs:
       - name: Attach APK to the GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk "MiIPTV-${GITHUB_REF_NAME}.apk"
-          gh release create "$GITHUB_REF_NAME" "MiIPTV-${GITHUB_REF_NAME}.apk" \
-            --title "Mi IPTV $GITHUB_REF_NAME" --generate-notes
+          APK="MiIPTV-${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$APK"
+          # Works whether the release was created on github.com or not yet
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$APK" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$APK" --title "Mi IPTV $GITHUB_REF_NAME" --generate-notes
+          fi
         env:
           GH_TOKEN: ${{ github.token }}

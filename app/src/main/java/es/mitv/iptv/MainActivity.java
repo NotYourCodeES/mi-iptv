@@ -65,7 +65,7 @@ import es.mitv.iptv.core.M3uParser;
 @OptIn(markerClass = UnstableApi.class)
 public class MainActivity extends Activity implements ConfigServer.Listener {
 
-    static final String USER_AGENT = "MiIPTV/1.3 (Android TV)";
+    static final String USER_AGENT = "MiIPTV/1.3.1 (Android TV)";
     private static final String CACHE_FILE = "playlist.m3u";
     private static final long PREVIEW_DELAY_MS = 650;
     private static final long EXIT_WINDOW_MS = 2500;
