@@ -1223,6 +1223,11 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         @Override public String appVersion() { return APP_VERSION; }
 
         @Override
+        public String pairingLockedMessage(int seconds) {
+            return getString(R.string.remote_pairing_locked, seconds);
+        }
+
+        @Override
         public void showPairingCode(String pin, String deviceName) {
             ui.post(() -> showPairingOverlay(pin, deviceName));
         }

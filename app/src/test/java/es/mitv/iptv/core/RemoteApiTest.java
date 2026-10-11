@@ -95,6 +95,21 @@ public class RemoteApiTest {
     }
 
     @Test
+    public void pairingIsLockedAfterTooManyWrongPins() throws Exception {
+        post("/api/remote/pair/start", "device=x", null);
+        String wrong = shownPin.equals("0000") ? "1111" : "0000";
+        for (int i = 0; i < Pairing.MAX_ATTEMPTS; i++) post("/api/remote/pair", "pin=" + wrong + "&device=x", null);
+
+        shownPin = null;
+        HttpURLConnection c = postConn("/api/remote/pair/start", "device=x", null);
+        assertEquals(429, c.getResponseCode());
+        String r = read(c);
+        assertTrue(r, r.contains("\"error\":\"locked\""));
+        assertTrue(r, r.contains("\"message\":\"Too many wrong codes. Try again in 30 s.\""));
+        assertEquals("no PIN is shown on the TV", null, shownPin);
+    }
+
+    @Test
     public void keysPlayFavoritesSearchAndShareReachTheTv() throws Exception {
         String token = pair("p");
         assertTrue(post("/api/remote/key", "key=up", token).contains("\"ok\":true"));

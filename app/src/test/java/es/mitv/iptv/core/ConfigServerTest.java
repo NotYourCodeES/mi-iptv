@@ -55,11 +55,46 @@ public class ConfigServerTest {
     }
 
     @Test
-    public void emptyPasswordKeepsTheSavedOne() throws Exception {
-        String r = post("/api/config", "mode=xtream&server=new.tv&user=me&pass=");
+    public void emptyPasswordKeepsTheSavedOneForTheSameAccount() throws Exception {
+        String r = post("/api/config", "mode=xtream&server=http%3A%2F%2Fs%2F&user=u&pass=");
         assertTrue(r.contains("\"ok\":true"));
         assertEquals("secret", saved.pass);
-        assertEquals("new.tv", saved.server);
+    }
+
+    @Test
+    public void savedPasswordIsNeverSentToAnotherServerOrUser() throws Exception {
+        assertTrue(post("/api/config", "mode=xtream&server=evil.example&user=u&pass=").contains("\"ok\":false"));
+        assertTrue(post("/api/config", "mode=xtream&server=s&user=other&pass=").contains("\"ok\":false"));
+        assertEquals("s", saved.server);
+        assertEquals("u", saved.user);
+
+        assertTrue(post("/api/config", "mode=xtream&server=new.tv&user=me&pass=new").contains("\"ok\":true"));
+        assertEquals("new", saved.pass);
+    }
+
+    @Test
+    public void rejectsOtherWebsites() throws Exception {
+        assertTrue(raw("GET /api/config HTTP/1.1\r\nHost: evil.example:8080\r\n\r\n").startsWith("HTTP/1.1 403"));
+        assertTrue(raw("POST /api/config HTTP/1.1\r\nHost: 127.0.0.1\r\nOrigin: http://evil.example\r\n"
+                + "Content-Length: 0\r\n\r\n").startsWith("HTTP/1.1 403"));
+        assertEquals("u", saved.user);
+        assertTrue(raw("GET / HTTP/1.1\r\nHost: mitele.local:8080\r\n\r\n").startsWith("HTTP/1.1 200"));
+        assertTrue(raw("POST /api/reload HTTP/1.1\r\nHost: 192.168.1.50:8080\r\n"
+                + "Origin: http://192.168.1.50:8080\r\nContent-Length: 0\r\n\r\n").startsWith("HTTP/1.1 200"));
+    }
+
+    @Test
+    public void recognisesLocalHostNames() {
+        assertTrue(ConfigServer.isLocalHost(null));
+        assertTrue(ConfigServer.isLocalHost("192.168.1.50:8080"));
+        assertTrue(ConfigServer.isLocalHost("[fe80::1]:8080"));
+        assertTrue(ConfigServer.isLocalHost("localhost:8080"));
+        assertTrue(ConfigServer.isLocalHost("tele"));
+        assertTrue(ConfigServer.isLocalHost("Android-TV.local."));
+        assertTrue(ConfigServer.isLocalHost("tv.home.arpa"));
+        assertFalse(ConfigServer.isLocalHost("evil.example"));
+        assertFalse(ConfigServer.isLocalHost("192.168.1.50.nip.io:8080"));
+        assertFalse(ConfigServer.isLocalHost(""));
     }
 
     @Test
@@ -76,6 +111,19 @@ public class ConfigServerTest {
     @Test
     public void reloadEndpointCallsListener() throws Exception {
         assertTrue(post("/api/reload", "").contains("Reloading"));
+    }
+
+    private String raw(String request) throws Exception {
+        try (java.net.Socket s = new java.net.Socket("127.0.0.1", server.getPort())) {
+            s.getOutputStream().write(request.getBytes(StandardCharsets.ISO_8859_1));
+            s.getOutputStream().flush();
+            InputStream in = s.getInputStream();
+            java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+            byte[] b = new byte[4096];
+            int n;
+            while ((n = in.read(b)) > 0) buf.write(b, 0, n);
+            return new String(buf.toByteArray(), StandardCharsets.UTF_8);
+        }
     }
 
     private String get(String path) throws Exception {

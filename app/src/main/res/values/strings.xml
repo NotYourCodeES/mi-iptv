@@ -78,4 +78,5 @@
     <string name="remote_open_app">Open Mi IPTV on the TV first</string>
     <string name="remote_busy">The TV is busy, try again</string>
     <string name="remote_shared_playing">Playing on the TV</string>
+    <string name="remote_pairing_locked">Too many wrong codes. Try again in %d s.</string>
 </resources>

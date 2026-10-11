@@ -41,6 +41,10 @@ public final class RemoteApi {
         void showPairingCode(String pin, String deviceName);
         void hidePairingCode();
         void onDevicePaired(String deviceName);
+        /** Message for the phone while pairing is locked after too many wrong codes. */
+        default String pairingLockedMessage(int seconds) {
+            return "Too many wrong codes. Try again in " + seconds + " s.";
+        }
 
         /** Presses a key from {@link #KEYS}. Returns a message for the phone, or null if done. */
         String key(String key);
@@ -125,6 +129,12 @@ public final class RemoteApi {
         if (post && p.equals("pair/start")) {
             String device = Pairing.cleanName(req.param("device"));
             String pin = pairing.start(device);
+            if (pin == null) {
+                int seconds = (int) ((pairing.lockedForMs() + 999) / 1000);
+                json(out, 429, "{\"ok\":false,\"error\":\"locked\",\"retryIn\":" + seconds
+                        + ",\"message\":" + ConfigServer.json(tv.pairingLockedMessage(seconds)) + "}");
+                return true;
+            }
             tv.showPairingCode(pin, device);
             json(out, 200, "{\"ok\":true,\"digits\":" + Pairing.PIN_DIGITS
                     + ",\"expiresIn\":" + (Pairing.PIN_VALID_MS / 1000) + "}");

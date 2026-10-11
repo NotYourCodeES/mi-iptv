@@ -69,4 +69,5 @@
     <string name="remote_open_app">Abre Mi IPTV en la tele primero</string>
     <string name="remote_busy">La tele está ocupada, inténtalo de nuevo</string>
     <string name="remote_shared_playing">Reproduciendo en la tele</string>
+    <string name="remote_pairing_locked">Demasiados códigos incorrectos. Vuelve a intentarlo en %d s.</string>
 </resources>

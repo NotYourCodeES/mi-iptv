@@ -132,9 +132,16 @@ final class AppModel {
     }
 
     /// Asks the TV to show the code again (or a new one if it expired).
-    func requestNewCode(for target: PairingTarget) async {
+    /// Returns an error to show, e.g. while the TV is locked after too many wrong codes.
+    @discardableResult
+    func requestNewCode(for target: PairingTarget) async -> String? {
         let client = TVClient(host: target.host, port: target.port, token: nil)
-        try? await client.startPairing(device: deviceName)
+        do {
+            try await client.startPairing(device: deviceName)
+            return nil
+        } catch {
+            return error.localizedDescription
+        }
     }
 
     func submitPin(_ pin: String, for target: PairingTarget) async -> PinResult {

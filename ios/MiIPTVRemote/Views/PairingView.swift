@@ -65,7 +65,9 @@ struct PairingView: View {
             Button("Show a new code on the TV") {
                 error = nil
                 pin = ""
-                Task { await model.requestNewCode(for: target) }
+                Task {
+                    if let message = await model.requestNewCode(for: target) { error = message }
+                }
             }
             .font(.subheadline.weight(.semibold))
 
@@ -102,8 +104,11 @@ struct PairingView: View {
             case .wrong:
                 fail(String(localized: "That code isn't right. Try again."))
             case .expired:
-                fail(String(localized: "The code expired. There's a new one on the TV."))
-                await model.requestNewCode(for: target)
+                if let message = await model.requestNewCode(for: target) {
+                    fail(message)
+                } else {
+                    fail(String(localized: "The code expired. There's a new one on the TV."))
+                }
             case .failed(let message):
                 fail(message)
             }

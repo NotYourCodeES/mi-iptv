@@ -32,6 +32,11 @@ public final class Pairing {
     public static final long PIN_VALID_MS = 2 * 60 * 1000;
     static final int MAX_ATTEMPTS = 5;
     static final int MAX_DEVICES = 10;
+    /** Pause after {@link #MAX_ATTEMPTS} wrong codes; it doubles each time, up to {@link #MAX_LOCKOUT_MS}. */
+    static final long LOCKOUT_MS = 30 * 1000;
+    static final long MAX_LOCKOUT_MS = 15 * 60 * 1000;
+    /** Wrong codes older than this are forgotten. */
+    static final long FORGIVE_MS = 60 * 60 * 1000;
 
     private final Store store;
     private final Clock clock;
@@ -41,7 +46,11 @@ public final class Pairing {
     private String pin;
     private String pinDevice;
     private long pinExpires;
+    // Wrong codes are counted across PINs, so asking for a new PIN doesn't give fresh tries
     private int attempts;
+    private int lockouts;
+    private long lockedUntil;
+    private long lastFailure;
 
     public Pairing(Store store) {
         this(store, System::currentTimeMillis);
@@ -57,12 +66,14 @@ public final class Pairing {
     /**
      * Starts (or continues) a pairing request and returns the PIN to show on the TV.
      * An active PIN is reused so the number on screen doesn't change under the user.
+     * Returns null while pairing is locked after too many wrong codes (see {@link #lockedForMs()}).
      */
     public synchronized String start(String deviceName) {
         long now = clock.now();
+        if (now < lockedUntil) return null;
+        forgiveOldFailures(now);
         if (pin == null || now >= pinExpires) {
             pin = String.format(Locale.ROOT, "%0" + PIN_DIGITS + "d", random.nextInt(pow10(PIN_DIGITS)));
-            attempts = 0;
         }
         pinDevice = cleanName(deviceName);
         pinExpires = now + PIN_VALID_MS;
@@ -76,6 +87,11 @@ public final class Pairing {
 
     public synchronized boolean isPending() {
         return pin != null && clock.now() < pinExpires;
+    }
+
+    /** How long pairing stays locked after too many wrong codes (0 if it isn't). */
+    public synchronized long lockedForMs() {
+        return Math.max(0, lockedUntil - clock.now());
     }
 
     public synchronized void cancel() {
@@ -96,22 +112,34 @@ public final class Pairing {
         public boolean ok() { return token != null; }
     }
 
-    /** Checks the PIN typed on the phone. After {@link #MAX_ATTEMPTS} wrong tries the PIN is discarded. */
+    /**
+     * Checks the PIN typed on the phone. After {@link #MAX_ATTEMPTS} wrong tries the PIN is discarded
+     * and no new one can be requested for a while.
+     */
     public synchronized Result confirm(String typedPin, String deviceName) {
         if (!isPending()) {
             pin = null;
             return new Result(null, true);
         }
+        long now = clock.now();
+        forgiveOldFailures(now);
         String typed = typedPin == null ? "" : typedPin.trim();
         boolean match = MessageDigest.isEqual(typed.getBytes(StandardCharsets.UTF_8), pin.getBytes(StandardCharsets.UTF_8));
         if (!match) {
             attempts++;
+            lastFailure = now;
             if (attempts >= MAX_ATTEMPTS) {
+                attempts = 0;
+                lockouts++;
+                lockedUntil = now + Math.min(LOCKOUT_MS << Math.min(lockouts - 1, 10), MAX_LOCKOUT_MS);
                 pin = null;
+                pinDevice = null;
                 return new Result(null, true);
             }
             return new Result(null, false);
         }
+        attempts = 0;
+        lockouts = 0;
         String name = cleanName(deviceName != null && !deviceName.trim().isEmpty() ? deviceName : pinDevice);
         String token = newToken();
         devices.put(token, name);
@@ -146,6 +174,14 @@ public final class Pairing {
     public synchronized void forgetAll() {
         devices.clear();
         store.save(new LinkedHashMap<>(devices));
+    }
+
+    private void forgiveOldFailures(long now) {
+        if (lastFailure != 0 && now - lastFailure >= FORGIVE_MS) {
+            attempts = 0;
+            lockouts = 0;
+            lastFailure = 0;
+        }
     }
 
     private String newToken() {

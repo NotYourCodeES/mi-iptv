@@ -3,6 +3,7 @@ package es.mitv.iptv.core;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -80,6 +81,65 @@ public class PairingTest {
         }
         assertTrue(pairing.confirm(wrong, "a").expired);
         assertFalse("even the right PIN no longer works", pairing.confirm(pin, "a").ok());
+    }
+
+    @Test
+    public void tooManyWrongPinsLockPairingForAWhile() {
+        burnAPin();
+        assertNull("no new PIN while locked", pairing.start("a"));
+        assertEquals(Pairing.LOCKOUT_MS, pairing.lockedForMs());
+
+        now.addAndGet(Pairing.LOCKOUT_MS);
+        assertNotNull(pairing.start("a"));
+        assertEquals(0, pairing.lockedForMs());
+    }
+
+    @Test
+    public void lockoutDoublesEachTimeUpToALimit() {
+        burnAPin();
+        now.addAndGet(Pairing.LOCKOUT_MS);
+        burnAPin();
+        assertEquals(2 * Pairing.LOCKOUT_MS, pairing.lockedForMs());
+        for (int i = 0; i < 12; i++) {
+            now.addAndGet(pairing.lockedForMs());
+            burnAPin();
+        }
+        assertEquals(Pairing.MAX_LOCKOUT_MS, pairing.lockedForMs());
+    }
+
+    @Test
+    public void aNewPinDoesNotGiveFreshTries() {
+        String pin = pairing.start("a");
+        String wrong = pin.equals("0000") ? "1111" : "0000";
+        for (int i = 1; i < Pairing.MAX_ATTEMPTS; i++) assertFalse(pairing.confirm(wrong, "a").expired);
+        now.addAndGet(Pairing.PIN_VALID_MS + 1); // let it expire instead of using the last try
+
+        pin = pairing.start("a");
+        wrong = pin.equals("0000") ? "1111" : "0000";
+        assertTrue(pairing.confirm(wrong, "a").expired);
+        assertNull(pairing.start("a"));
+    }
+
+    @Test
+    public void successAndTimeForgiveWrongCodes() {
+        burnAPin();
+        now.addAndGet(Pairing.LOCKOUT_MS);
+        String pin = pairing.start("a");
+        assertTrue(pairing.confirm(pin, "a").ok());
+        burnAPin();
+        assertEquals("the count started again after pairing", Pairing.LOCKOUT_MS, pairing.lockedForMs());
+
+        now.addAndGet(Pairing.FORGIVE_MS);
+        burnAPin();
+        assertEquals("old failures were forgotten", Pairing.LOCKOUT_MS, pairing.lockedForMs());
+    }
+
+    private void burnAPin() {
+        String pin = pairing.start("a");
+        assertNotNull(pin);
+        String wrong = pin.equals("0000") ? "1111" : "0000";
+        for (int i = 0; i < Pairing.MAX_ATTEMPTS; i++) pairing.confirm(wrong, "a");
+        assertFalse(pairing.isPending());
     }
 
     @Test

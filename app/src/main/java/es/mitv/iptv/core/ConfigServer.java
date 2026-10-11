@@ -129,6 +129,12 @@ public final class ConfigServer {
             if (contentLength < 0 || contentLength > MAX_BODY) { send(out, 413, "text/plain", "Too large"); return; }
             byte[] body = readBytes(in, contentLength);
 
+            String host = headers.get("host");
+            if (!isLocalHost(host) || !isSameOrigin(headers.get("origin"), host)) {
+                send(out, 403, "text/plain; charset=utf-8", "Forbidden");
+                return;
+            }
+
             RemoteApi r = remote;
             if (r != null && path.startsWith("/api/remote/")) {
                 HttpRequest request = new HttpRequest(method, path, parseForm(queryString), headers,
@@ -150,8 +156,9 @@ public final class ConfigServer {
                 cfg.server = val(form, "server");
                 cfg.user = val(form, "user");
                 cfg.pass = val(form, "pass");
-                // An empty password keeps the one already saved
-                if (cfg.pass.isEmpty() && prev != null) cfg.pass = prev.pass;
+                // An empty password keeps the one already saved, but only for the same server and user:
+                // otherwise anyone on the network could have the TV send it to a server of their choice
+                if (cfg.pass.isEmpty() && prev != null && sameAccount(prev, cfg)) cfg.pass = prev.pass;
                 if (!cfg.isComplete()) {
                     send(out, 400, "application/json; charset=utf-8", result(false, listener.missingFieldsMessage()));
                     return;
@@ -176,6 +183,41 @@ public final class ConfigServer {
                 + ",\"user\":" + json(c.user)
                 + ",\"hasPass\":" + (!c.pass.isEmpty())
                 + ",\"status\":" + json(listener.status()) + "}";
+    }
+
+    static boolean sameAccount(IptvConfig a, IptvConfig b) {
+        return IptvConfig.MODE_XTREAM.equals(a.mode) && IptvConfig.MODE_XTREAM.equals(b.mode)
+                && IptvConfig.normalizeServer(a.server).equalsIgnoreCase(IptvConfig.normalizeServer(b.server))
+                && a.user.trim().equals(b.user.trim());
+    }
+
+    /**
+     * Only answers to names that can't belong to a website: IP addresses, localhost, single-label
+     * and local-network names. This stops DNS rebinding (a website pointing its own name at the TV).
+     * Clients that send no Host header at all are not browsers and are let through.
+     */
+    static boolean isLocalHost(String host) {
+        if (host == null) return true;
+        String h = host.trim().toLowerCase(Locale.ROOT);
+        if (h.startsWith("[")) return h.indexOf(']') > 0; // IPv6 literal
+        int colon = h.lastIndexOf(':');
+        if (colon >= 0) h = h.substring(0, colon);
+        while (h.endsWith(".")) h = h.substring(0, h.length() - 1);
+        if (h.isEmpty()) return false;
+        if (h.matches("\\d{1,3}(\\.\\d{1,3}){3}") || h.equals("localhost") || h.indexOf('.') < 0) return true;
+        for (String suffix : LOCAL_SUFFIXES) {
+            if (h.endsWith(suffix)) return true;
+        }
+        return false;
+    }
+
+    private static final String[] LOCAL_SUFFIXES = {
+            ".local", ".lan", ".home", ".home.arpa", ".internal", ".localhost"};
+
+    /** Browsers send Origin on cross-site requests: it has to be this same server. */
+    static boolean isSameOrigin(String origin, String host) {
+        if (origin == null) return true;
+        return host != null && origin.trim().equalsIgnoreCase("http://" + host.trim());
     }
 
     private static String result(boolean ok, String msg) {
@@ -259,8 +301,9 @@ public final class ConfigServer {
     }
 
     static void send(OutputStream out, int code, String type, byte[] bytes, String extraHeaders) throws IOException {
-        String reason = code == 200 ? "OK" : code == 401 ? "Unauthorized" : code == 404 ? "Not Found"
-                : code == 413 ? "Payload Too Large" : "Bad Request";
+        String reason = code == 200 ? "OK" : code == 401 ? "Unauthorized" : code == 403 ? "Forbidden"
+                : code == 404 ? "Not Found" : code == 413 ? "Payload Too Large"
+                : code == 429 ? "Too Many Requests" : "Bad Request";
         String head = "HTTP/1.1 " + code + " " + reason + "\r\n"
                 + "Content-Type: " + type + "\r\n"
                 + "Content-Length: " + bytes.length + "\r\n"
