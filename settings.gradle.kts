@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "MiIPTV"
 include(":app")
+include(":phone")
