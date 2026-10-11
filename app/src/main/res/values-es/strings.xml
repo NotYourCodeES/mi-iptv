@@ -11,7 +11,7 @@
     <string name="toast_no_favorites">Aún no tienes favoritos: mantén pulsado OK sobre un canal</string>
     <string name="toast_fav_added">★  %s añadido a favoritos</string>
     <string name="toast_fav_removed">%s quitado de favoritos</string>
-    <string name="toast_press_back_again">Pulsa Atrás otra vez para salir</string>
+    <string name="toast_press_back_again">Pulsa Atrás otra vez para ir al inicio de la tele</string>
 
     <string name="group_favorites">Favoritos</string>
     <string name="group_all">Todos los canales</string>

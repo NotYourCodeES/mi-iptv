@@ -21,7 +21,7 @@ Escribir enlaces largos y contraseñas con el mando de la tele es un suplicio. M
 - **Vista previa en directo.** Al moverte por la lista, el canal seleccionado se reproduce en una ventana pequeña; pulsa OK para verlo a pantalla completa.
 - **Favoritos.** Mantén pulsado OK sobre un canal para añadirlo. El botón **Guía** del mando abre directamente tus favoritos.
 - **App de iPhone como mando (opcional).** [Mi IPTV Remote](ios/) encuentra la tele en tu Wi-Fi y convierte el móvil en un mando táctil, un teclado para buscar canales, una lista de canales con logos y un destino de *Compartir* para mandar enlaces desde Safari a la tele. La tele funciona exactamente igual sin ella.
-- **Pensada para el mando.** Arriba/Abajo y CH+/CH− cambian de canal, Atrás no cierra la app por accidente y un banner muestra el logo, número y categoría del canal.
+- **Pensada para el mando.** Arriba/Abajo y CH+/CH− cambian de canal, Atrás no cierra la app por accidente (pulsándolo dos veces seguidas vas al inicio de la tele) y un banner muestra el logo, número y categoría del canal.
 - **Logos de los canales** descargados y guardados en memoria con un cargador de imágenes propio.
 - **Audio Dolby.** Incluye un descodificador FFmpeg para que los canales con AC-3 / E-AC-3 tengan sonido aunque la tele no lo ofrezca a las apps.
 - **Reproducción robusta.** HLS y MPEG-TS, reintento automático si el canal falla y copia de la última lista por si no hay conexión.
@@ -50,6 +50,7 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 | **Arriba / Abajo**, **CH+ / CH−** | Canal anterior / siguiente | Moverse por la lista (con vista previa) |
 | **Guía** (o azul) | Abrir favoritos | Abrir favoritos |
 | **Atrás** | Abrir la lista | Volver al canal que estabas viendo |
+| **Atrás dos veces seguidas** | Ir al inicio de la tele | Ir al inicio de la tele |
 | **0–9** | Escribir un número de canal | Escribir un número de canal |
 | **Último canal** | Canal anterior | Canal anterior |
 | **Play / Pausa** | Pausar; pulsa otra vez para volver al directo | — |

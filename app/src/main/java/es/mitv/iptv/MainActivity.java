@@ -1,6 +1,7 @@
 package es.mitv.iptv;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
@@ -83,6 +84,8 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private static final String CACHE_FILE = "playlist.m3u";
     private static final long PREVIEW_DELAY_MS = 650;
     private static final long EXIT_WINDOW_MS = 2500;
+    /** Two Back presses this close together go to the TV's home screen from anywhere. */
+    private static final long DOUBLE_BACK_MS = 700;
     private static final long OSD_MS = 5000;
     private static final long NUMBER_ENTRY_MS = 1800;
     private static final String SEARCH_GROUP = "\u0000search";
@@ -651,6 +654,13 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     }
 
     private void handleBack() {
+        long now = SystemClock.uptimeMillis();
+        long sinceLast = now - lastBackTime;
+        lastBackTime = now;
+        if (sinceLast < DOUBLE_BACK_MS) {
+            goToTvHome();
+            return;
+        }
         if (panelOpen() && committed != null) {
             hidePanel();
             showOsd();
@@ -661,12 +671,21 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             else stopSharedStream(); // a link sent from the phone before any playlist was set up
             return;
         }
-        long now = System.currentTimeMillis();
-        if (now - lastBackTime < EXIT_WINDOW_MS) {
-            finish();
-        } else {
-            lastBackTime = now;
-            toast(getString(R.string.toast_press_back_again));
+        // Nothing to go back to (welcome screen, or a list with nothing playing)
+        if (sinceLast < EXIT_WINDOW_MS) goToTvHome();
+        else toast(getString(R.string.toast_press_back_again));
+    }
+
+    /** Shows the TV's home screen, like the remote's Home button; the app stays ready in the background. */
+    private void goToTvHome() {
+        lastBackTime = 0;
+        Intent home = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(home);
+        } catch (RuntimeException e) {
+            moveTaskToBack(true);
         }
     }
 

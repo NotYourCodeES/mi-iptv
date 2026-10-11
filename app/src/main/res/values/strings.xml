@@ -15,7 +15,7 @@
     <string name="toast_no_favorites">No favorites yet: long-press OK on a channel</string>
     <string name="toast_fav_added">★  %s added to favorites</string>
     <string name="toast_fav_removed">%s removed from favorites</string>
-    <string name="toast_press_back_again">Press Back again to exit</string>
+    <string name="toast_press_back_again">Press Back again to go to the TV home</string>
 
     <!-- Groups and lists -->
     <string name="group_favorites">Favorites</string>

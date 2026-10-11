@@ -27,7 +27,7 @@ Typing long playlist URLs and passwords with a TV remote is painful. Mi IPTV run
 - **Live preview.** While you browse the list, the highlighted channel plays in a small window; press OK to go full screen.
 - **Favorites.** Long-press OK on any channel to add it to favorites. The remote's **Guide** button jumps straight to them.
 - **iPhone remote app (optional).** [Mi IPTV Remote](ios/) finds the TV on your Wi-Fi and turns your phone into a touch remote, a keyboard to search channels, a channel list with logos, and a Share target to send links from Safari straight to the TV. The TV works exactly the same without it.
-- **Designed for the remote.** Up/Down and CH+/CH− switch channels, Back never closes the app by accident, and a banner shows the channel's logo, number and category.
+- **Designed for the remote.** Up/Down and CH+/CH− switch channels, Back never closes the app by accident (press it twice quickly to go to the TV home screen), and a banner shows the channel's logo, number and category.
 - **Channel logos** loaded and cached in memory with a small custom image loader (no image library needed).
 - **Dolby audio support.** Ships an FFmpeg audio decoder so AC-3 / E-AC-3 channels play with sound even on TVs whose system decoders don't expose them to apps.
 - **Resilient playback.** HLS and MPEG-TS streams, automatic retry on stream errors, and an offline copy of the last playlist.
@@ -116,6 +116,7 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 | **Left / Right** | Open the channel list | Switch between categories and channels |
 | **Guide** (or blue) | Open favorites | Open favorites |
 | **Back** | Open the channel list | Return to the channel you were watching |
+| **Back twice quickly** | Go to the TV home screen | Go to the TV home screen |
 | **0–9** | Type a channel number | Type a channel number |
 | **Last channel** | Previous channel | Previous channel |
 | **Play / Pause** | Pause; press again to go back to live | — |
