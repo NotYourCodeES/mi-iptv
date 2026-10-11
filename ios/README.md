@@ -43,7 +43,8 @@ sequenceDiagram
 ```
 
 - The TV announces itself with Android's `NsdManager`; the phone browses with `NWBrowser`. You can also type the address shown on the TV.
-- Pairing uses a 4-digit code shown on the TV (valid for 2 minutes, 5 tries). The phone then gets a random token that it sends as `Authorization: Bearer …`.
+- Pairing uses a 4-digit code shown on the TV (valid for 2 minutes). After 5 wrong codes the TV stops handing out new ones for 30 seconds, doubling each time up to 15 minutes (`pair/start` answers `429`). The phone then gets a random token that it sends as `Authorization: Bearer …`.
+- The TV only answers requests addressed to an IP address or a local-network name (`.local`, `.lan`…), and rejects requests sent by other websites.
 - Logos served over plain HTTP (blocked by iOS) are fetched through the TV.
 - Keys sent by the phone go through the same code as the physical remote, so the TV behaves identically.
 

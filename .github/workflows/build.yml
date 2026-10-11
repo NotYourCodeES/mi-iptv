@@ -39,9 +39,14 @@ jobs:
         run: |
           APK="MiIPTV-${GITHUB_REF_NAME}.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
+          # Release notes come from docs/releases/<tag>.md when it exists, otherwise from the commits
+          NOTES="docs/releases/${GITHUB_REF_NAME}.md"
           # Works whether the release was created on github.com or not yet
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" "$APK" --clobber
+            if [ -f "$NOTES" ]; then gh release edit "$GITHUB_REF_NAME" --notes-file "$NOTES"; fi
+          elif [ -f "$NOTES" ]; then
+            gh release create "$GITHUB_REF_NAME" "$APK" --title "Mi IPTV $GITHUB_REF_NAME" --notes-file "$NOTES"
           else
             gh release create "$GITHUB_REF_NAME" "$APK" --title "Mi IPTV $GITHUB_REF_NAME" --generate-notes
           fi
