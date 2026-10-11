@@ -125,9 +125,16 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 
 The optional [iPhone app](ios/) works on the same network as the TV:
 
+<p align="center">
+  <img src="docs/screenshots/iphone-connect.webp" width="260" alt="The iPhone app finds the TV on the Wi-Fi">
+  &nbsp;
+  <img src="docs/screenshots/iphone-remote.webp" width="260" alt="Remote tab with the channel playing on the TV">
+</p>
+
 - **Remote**: an Apple TV-style touch surface (swipe to move, tap for OK, hold for favorite) or classic arrows, plus channel and volume rockers that repeat while held, play/pause, mute, last channel and a number pad.
 - **Keyboard**: type on the phone and the TV shows the matching channels as you type.
 - **Channels**: the full list with logos, categories and favorites. Tap a channel to watch it on the TV.
+- **Change your playlist or account from the phone**: the *More* tab opens the TV's setup page inside the app to edit the M3U link or the Xtream server, username and password, and can paste any link to load it as the channel list. No computer needed.
 - **Share**: in Safari or any app, *Share → Mi IPTV* plays a stream on the TV or loads a playlist.
 - **Pairing**: the TV shows a 4-digit code the first time. Paired phones can be forgotten from the setup page.
 

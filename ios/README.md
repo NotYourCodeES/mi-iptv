@@ -6,11 +6,17 @@ SwiftUI · iOS 17+ · no third-party dependencies · English and Spanish
 
 ## Features
 
+<p align="center">
+  <img src="../docs/screenshots/iphone-connect.webp" width="260" alt="The app finds the TV on the Wi-Fi">
+  &nbsp;
+  <img src="../docs/screenshots/iphone-remote.webp" width="260" alt="Remote tab with the channel playing on the TV">
+</p>
+
 | Tab | What it does |
 |---|---|
 | **Remote** | What's on the TV, a touch surface (swipe = arrows, tap = OK, hold = favorite) or a D-pad, CH/VOL rockers that repeat while held, play/pause, mute, last channel, number pad and **Type on the TV** (live search on the TV screen) |
 | **Channels** | The TV's playlist with logos, categories and favorites. Search with the iPhone keyboard, tap to watch on the TV, swipe to add a favorite |
-| **More** | Opens the TV's setup page, reloads channels, sends a link to play or to use as the playlist, unpairs the phone |
+| **More** | Opens the TV's setup page inside the app to change the M3U link or the Xtream account, reloads channels, sends a link to play or to use as the playlist, unpairs the phone |
 | **Share extension** | *Share → Mi IPTV* from Safari or any app sends the link to the TV |
 
 ## Build and run

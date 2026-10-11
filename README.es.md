@@ -59,9 +59,16 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 
 La [app de iPhone](ios/) es opcional y funciona en la misma red que la tele:
 
+<p align="center">
+  <img src="docs/screenshots/iphone-connect.webp" width="260" alt="La app de iPhone encuentra la tele en la Wi-Fi">
+  &nbsp;
+  <img src="docs/screenshots/iphone-remote.webp" width="260" alt="Pestaña Mando con el canal que se ve en la tele">
+</p>
+
 - **Mando**: superficie táctil como la del Apple TV (desliza para moverte, toca para OK, mantén para favorito) o flechas clásicas, CH y VOL que se repiten al mantenerlos, play/pausa, silencio, último canal y teclado numérico.
 - **Teclado**: escribes en el móvil y la tele va mostrando los canales que coinciden.
 - **Canales**: la lista completa con logos, categorías y favoritos. Toca un canal para verlo en la tele.
+- **Cambia la lista o la cuenta desde el móvil**: la pestaña *Más* abre dentro de la app la página de configuración de la tele para editar el enlace M3U o el servidor, usuario y contraseña de Xtream, y permite pegar cualquier enlace para cargarlo como lista de canales. Sin necesidad de ordenador.
 - **Compartir**: en Safari o cualquier app, *Compartir → Mi IPTV* reproduce una emisión en la tele o carga una lista.
 - **Emparejamiento**: la primera vez la tele muestra un código de 4 cifras. Los móviles emparejados se pueden olvidar desde la página de configuración.
 
