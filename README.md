@@ -26,7 +26,7 @@ Typing long playlist URLs and passwords with a TV remote is painful. Mi IPTV run
 - **Setup from any device on your network.** A built-in web page (and a QR code on the TV) to enter an M3U URL or Xtream Codes server, username and password.
 - **Live preview.** While you browse the list, the highlighted channel plays in a small window; press OK to go full screen.
 - **Favorites.** Long-press OK on any channel to add it to favorites. The remote's **Guide** button jumps straight to them.
-- **iPhone remote app (optional).** [Mi IPTV Remote](ios/) finds the TV on your Wi-Fi and turns your phone into a touch remote, a keyboard to search channels, a channel list with logos, and a Share target to send links from Safari straight to the TV. The TV works exactly the same without it.
+- **Phone remote apps for iPhone and Android (optional).** Mi IPTV Remote ([iPhone](ios/) · [Android](phone/)) finds the TV on your Wi-Fi and turns your phone into a touch remote, a keyboard to search channels, a channel list with logos, and a Share target to send links straight to the TV. The TV works exactly the same without them.
 - **Designed for the remote.** Up/Down and CH+/CH− switch channels, Back never closes the app by accident (press it twice quickly to go to the TV home screen), and a banner shows the channel's logo, number and category.
 - **Channel logos** loaded and cached in memory with a small custom image loader (no image library needed).
 - **Dolby audio support.** Ships an FFmpeg audio decoder so AC-3 / E-AC-3 channels play with sound even on TVs whose system decoders don't expose them to apps.
@@ -70,7 +70,10 @@ Java 17 · Android SDK 35 (min SDK 21) · [AndroidX Media3 / ExoPlayer](https://
 
 ### Download
 
-Grab the latest APK from the [Releases](../../releases) page, or from the artifacts of the latest [Build](../../actions/workflows/build.yml) run.
+Grab the latest APKs from the [Releases](../../releases) page, or from the artifacts of the latest [Build](../../actions/workflows/build.yml) run:
+
+- `MiIPTV-vX.Y.Z.apk`: the TV app.
+- `MiIPTV-Remote-vX.Y.Z.apk`: the optional remote for Android phones (Android 8 or newer).
 
 ### Build it yourself
 
@@ -121,9 +124,9 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 | **Last channel** | Previous channel | Previous channel |
 | **Play / Pause** | Pause; press again to go back to live | — |
 
-## iPhone remote
+## Phone remote
 
-The optional [iPhone app](ios/) works on the same network as the TV:
+The optional remote app exists for [iPhone](ios/) and [Android](phone/), and works on the same network as the TV:
 
 <p align="center">
   <img src="docs/screenshots/iphone-connect.webp" width="260" alt="The iPhone app finds the TV on the Wi-Fi">
@@ -135,15 +138,22 @@ The optional [iPhone app](ios/) works on the same network as the TV:
 - **Keyboard**: type on the phone and the TV shows the matching channels as you type.
 - **Channels**: the full list with logos, categories and favorites. Tap a channel to watch it on the TV.
 - **Change your playlist or account from the phone**: the *More* tab opens the TV's setup page inside the app to edit the M3U link or the Xtream server, username and password, and can paste any link to load it as the channel list. No computer needed.
-- **Share**: in Safari or any app, *Share → Mi IPTV* plays a stream on the TV or loads a playlist.
+- **Share**: in Safari, Chrome or any app, *Share → Mi IPTV* plays a stream on the TV or loads a playlist.
+- **Volume buttons (Android)**: the phone's own volume buttons change the TV's volume while the app is open.
 - **Pairing**: the TV shows a 4-digit code the first time. Paired phones can be forgotten from the setup page.
 
-See [`ios/README.md`](ios/README.md) to build and install it with Xcode.
+On Android, install `MiIPTV-Remote-vX.Y.Z.apk` from the [Releases](../../releases) page ([`phone/README.md`](phone/README.md)). On iPhone, build it with Xcode ([`ios/README.md`](ios/README.md)).
+
+<p align="center">
+  <img src="docs/screenshots/android-remote.webp" width="260" alt="The Android app's remote">
+  &nbsp;
+  <img src="docs/screenshots/android-channels.webp" width="260" alt="The Android app's channel list">
+</p>
 
 ## Roadmap
 
 - [ ] Electronic program guide (EPG / XMLTV): what's on now and next
-- [x] Search channels (from the iPhone app)
+- [x] Search channels (from the phone apps)
 - [x] Jump to a channel by typing its number
 - [ ] Quick switch between the last two channels
 - [ ] Movies and series (VOD) for Xtream providers
