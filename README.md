@@ -26,6 +26,7 @@ Typing long playlist URLs and passwords with a TV remote is painful. Mi IPTV run
 - **Setup from any device on your network.** A built-in web page (and a QR code on the TV) to enter an M3U URL or Xtream Codes server, username and password.
 - **Live preview.** While you browse the list, the highlighted channel plays in a small window; press OK to go full screen.
 - **Favorites.** Long-press OK on any channel to add it to favorites. The remote's **Guide** button jumps straight to them.
+- **Settings on the TV.** Several playlists or Xtream accounts to switch between, hidden categories, parental control with a PIN, daily channel reload and language, all usable with just the remote.
 - **Phone remote apps for iPhone and Android (optional).** Mi IPTV Remote ([iPhone](ios/) · [Android](phone/)) finds the TV on your Wi-Fi and turns your phone into a touch remote, a keyboard to search channels, a channel list with logos, and a Share target to send links straight to the TV. The TV works exactly the same without them.
 - **Designed for the remote.** Up/Down and CH+/CH− switch channels, Back never closes the app by accident (press it twice quickly to go to the TV home screen), and a banner shows the channel's logo, number and category.
 - **Channel logos** loaded and cached in memory with a small custom image loader (no image library needed).
@@ -57,6 +58,10 @@ flowchart LR
 | [`core/RemoteApi.java`](app/src/main/java/es/mitv/iptv/core/RemoteApi.java) | JSON API and live event stream for the phone app, under `/api/remote/` |
 | [`core/Pairing.java`](app/src/main/java/es/mitv/iptv/core/Pairing.java) | PIN pairing and per-phone tokens |
 | [`RemoteDiscovery.java`](app/src/main/java/es/mitv/iptv/RemoteDiscovery.java) | Announces the TV on the network (mDNS / Bonjour) for the phone app |
+| [`SettingsActivity.java`](app/src/main/java/es/mitv/iptv/SettingsActivity.java) | The Settings screen on the TV (playlists, language, categories, parental control, updates) |
+| [`core/Playlists.java`](app/src/main/java/es/mitv/iptv/core/Playlists.java) | Several saved playlists, the active one and their offline copies |
+| [`core/ParentalLock.java`](app/src/main/java/es/mitv/iptv/core/ParentalLock.java) | PIN-locked categories (only a salted hash of the PIN is stored) |
+| [`core/TvSettings.java`](app/src/main/java/es/mitv/iptv/core/TvSettings.java) | Language, hidden categories and daily reload |
 | [`ImageLoader.java`](app/src/main/java/es/mitv/iptv/ImageLoader.java) | Async logo download with an in-memory LRU cache |
 | [`assets/config.html`](app/src/main/assets/config.html) | The setup web page (vanilla HTML/CSS/JS, bilingual) |
 
@@ -74,6 +79,8 @@ Grab the latest APKs from the [Releases](../../releases) page, or from the artif
 
 - `MiIPTV-vX.Y.Z.apk`: the TV app.
 - `MiIPTV-Remote-vX.Y.Z.apk`: the optional remote for Android phones (Android 8 or newer).
+
+From 1.5.0 on, both apps are always signed with the same key, so new versions install over the old ones. Coming from 1.4.0 or older, uninstall the old TV app once first.
 
 ### Build it yourself
 
@@ -123,6 +130,18 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 | **0–9** | Type a channel number | Type a channel number |
 | **Last channel** | Previous channel | Previous channel |
 | **Play / Pause** | Pause; press again to go back to live | — |
+| **Up** from the top of the lists | — | Go to the **Settings** button |
+
+## Settings on the TV
+
+Open **Settings** from the button at the top right of the channel menu, or from the welcome screen:
+
+- **Playlists**: save several M3U links or Xtream accounts and choose the one in use. The setup page and the phone apps edit the active one.
+- **Language**: follow the TV, or choose Spanish or English.
+- **Categories**: hide the ones you don't use. They disappear from the list, zapping, favorites, search and the phone apps.
+- **Parental control**: lock categories with a 4-digit PIN. They lock again when you leave the app.
+- **Updates**: reload the channels once a day without interrupting what's playing, or reload now.
+- **About**: version, setup address, paired phones and clearing favorites.
 
 ## Phone remote
 
@@ -155,7 +174,8 @@ On Android, install `MiIPTV-Remote-vX.Y.Z.apk` from the [Releases](../../release
 - [ ] Electronic program guide (EPG / XMLTV): what's on now and next
 - [x] Search channels (from the phone apps)
 - [x] Jump to a channel by typing its number
-- [ ] Quick switch between the last two channels
+- [x] Quick switch between the last two channels
+- [x] Several playlists, hidden categories and parental control
 - [ ] Movies and series (VOD) for Xtream providers
 
 ## Disclaimer

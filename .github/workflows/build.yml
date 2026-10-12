@@ -23,15 +23,22 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Optional: with these secrets both apps are signed with the same key on every build, so
-      # new versions install over old ones. Without them, the debug key is used.
+      # With these secrets both apps are signed with the same key on every build, so new
+      # versions install over old ones. Without them, branch and PR builds use the debug key,
+      # but a release tag fails: a debug-signed release would force everyone to uninstall.
       - name: Release signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.MIIPTV_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.MIIPTV_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.MIIPTV_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.MIIPTV_KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "MIIPTV_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "::error::Release tags must be signed with the release key. Add all four MIIPTV_KEYSTORE_* / MIIPTV_KEY_* secrets."
+            exit 1
           else
             echo "No signing secrets: using the debug key"
           fi
@@ -47,6 +54,23 @@ jobs:
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk dist/MiIPTV.apk
           cp phone/build/outputs/apk/release/phone-release.apk dist/MiIPTV-Remote.apk
+
+      - name: Check the APKs use the release key
+        if: env.MIIPTV_KEYSTORE != ''
+        env:
+          MIIPTV_KEYSTORE_PASSWORD: ${{ secrets.MIIPTV_KEYSTORE_PASSWORD }}
+          MIIPTV_KEY_ALIAS: ${{ secrets.MIIPTV_KEY_ALIAS }}
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          EXPECTED=$(keytool -exportcert -keystore "$MIIPTV_KEYSTORE" -storepass:env MIIPTV_KEYSTORE_PASSWORD -alias "$MIIPTV_KEY_ALIAS" | sha256sum | cut -d' ' -f1)
+          for APK in dist/*.apk; do
+            ACTUAL=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+            if [ "$ACTUAL" != "$EXPECTED" ]; then
+              echo "::error::$APK is not signed with the release key"
+              exit 1
+            fi
+            echo "$APK: signed with the release key"
+          done
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
