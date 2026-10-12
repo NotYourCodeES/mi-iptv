@@ -152,7 +152,6 @@
 
     <!-- Main screen -->
     <string name="group_settings">Settings</string>
-    <string name="group_settings_hint">Press OK to open the settings:\nplaylists, language, categories, parental control…</string>
     <string name="group_locked_hint">This category is locked.\nPress OK and enter the PIN.</string>
     <string name="toast_unlocked">Locked categories unlocked</string>
     <string name="toast_list_added">List “%s” added</string>

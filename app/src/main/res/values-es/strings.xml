@@ -143,7 +143,6 @@
 
     <!-- Main screen -->
     <string name="group_settings">Ajustes</string>
-    <string name="group_settings_hint">Pulsa OK para abrir los ajustes:\nlistas, idioma, categorías, control parental…</string>
     <string name="group_locked_hint">Esta categoría está bloqueada.\nPulsa OK y escribe el PIN.</string>
     <string name="toast_unlocked">Categorías desbloqueadas</string>
     <string name="toast_list_added">Lista «%s» añadida</string>

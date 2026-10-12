@@ -95,7 +95,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private static final long NUMBER_ENTRY_MS = 1800;
     private static final String SEARCH_GROUP = "\u0000search";
 
-    private static final int TYPE_FAV = 0, TYPE_ALL = 1, TYPE_GROUP = 2, TYPE_SEARCH = 3, TYPE_LOCKED = 4, TYPE_SETTINGS = 5;
+    private static final int TYPE_FAV = 0, TYPE_ALL = 1, TYPE_GROUP = 2, TYPE_SEARCH = 3, TYPE_LOCKED = 4;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -260,6 +260,9 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         welcomeSettings = findViewById(R.id.welcomeSettings);
         welcomeSettings.setText("⚙  " + getString(R.string.welcome_settings));
         welcomeSettings.setOnClickListener(v -> openSettings());
+        TextView panelSettings = findViewById(R.id.panelSettings);
+        panelSettings.setText("⚙  " + getString(R.string.group_settings));
+        panelSettings.setOnClickListener(v -> openSettings());
     }
 
     // ---------------------------------------------------------------- Player
@@ -352,10 +355,6 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         groupList.setOnItemClickListener((p, v, pos, id) -> {
-            if (pos >= 0 && pos < groups.size() && groups.get(pos).type == TYPE_SETTINGS) {
-                openSettings();
-                return;
-            }
             if (pos >= 0 && pos < groups.size() && groups.get(pos).type == TYPE_LOCKED) {
                 String name = groups.get(pos).name;
                 PinDialog.ask(this, parental, () -> unlock(name));
@@ -395,13 +394,11 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             list.addAll(allChannels);
         } else if (g.type == TYPE_LOCKED) {
             channelsEmpty.setText(R.string.group_locked_hint);
-        } else if (g.type == TYPE_SETTINGS) {
-            channelsEmpty.setText(R.string.group_settings_hint);
         } else {
             for (Channel c : allChannels) if (c.group.equals(g.name)) list.add(c);
         }
         shownChannels = list;
-        channelsTitle.setText(g.type == TYPE_SETTINGS ? g.label(this) : getString(R.string.channels_title, g.label(this), list.size()));
+        channelsTitle.setText(g.type == TYPE_LOCKED ? g.label(this) : getString(R.string.channels_title, g.label(this), list.size()));
         channelAdapter.notifyDataSetChanged();
         int playing = indexOfUrl(list, committed != null ? committed.url : null);
         channelList.setSelection(Math.max(0, playing));
@@ -558,13 +555,28 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         zapList = zap;
         if (previous != null && previous.number > 0 && !visibleUrls.contains(previous.url)) previous = null;
         channelsVersion++;
+        boolean onChannelList = channelList.hasFocus(); // before it may empty and give the focus away
         rebuildGroups();
         selectGroup(currentGroup >= 0 && currentGroup < groups.size() ? currentGroup : defaultGroup());
         if (committed != null && committed.number > 0 && !visibleUrls.contains(committed.url)) {
             // What was playing is now hidden or locked
             stopSharedStream();
             if (!allChannels.isEmpty() && started) showPanel();
-        } else if (committed != null && committed.number > 0) {
+        } else if (loadedUrl != null && (committed == null || !loadedUrl.equals(committed.url)) && !visibleUrls.contains(loadedUrl)) {
+            // A hidden or locked channel was being previewed: never keep showing it
+            ui.removeCallbacks(previewTask);
+            pendingPreview = null;
+            if (committed != null) {
+                load(committed.url);
+            } else {
+                loadedUrl = null;
+                player.stop();
+                player.clearMediaItems();
+            }
+            if (panelOpen()) showPreviewInfo(committed);
+        }
+        if (panelOpen() && shownChannels.isEmpty() && onChannelList) groupList.requestFocus();
+        if (committed != null && committed.number > 0) {
             zapIndex = indexOfUrl(zapList, committed.url);
             if (zapIndex < 0) {
                 zapList = new ArrayList<>(allChannels);
@@ -607,7 +619,6 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
                 else if (locked.contains(g)) groups.add(new GroupItem(g, allCounts.get(g), TYPE_LOCKED));
             }
         }
-        groups.add(new GroupItem(getString(R.string.group_settings), 0, TYPE_SETTINGS));
         if (selected != null) {
             currentGroup = -1;
             for (int i = 0; i < groups.size(); i++) {
@@ -1180,15 +1191,23 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         notifyState();
     }
 
+    /**
+     * Locked categories close again as soon as you leave the app (but not to open Settings).
+     * onPause, not onStop: Android may take seconds to stop the app, and you could be back by then.
+     */
     @Override
-    protected void onStop() {
-        super.onStop();
-        started = false;
-        // Locked categories close again when you leave the app (but not to open Settings)
+    protected void onPause() {
+        super.onPause();
         if (!openingSettings && Session.unlocked) {
             Session.unlocked = false;
             applyFilters();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        started = false;
         if (player != null) player.stop();
         notifyState();
     }
@@ -1640,7 +1659,6 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             if (type == TYPE_FAV) return "★  " + name;
             if (type == TYPE_SEARCH) return a.getString(R.string.group_search, a.searchQuery);
             if (type == TYPE_LOCKED) return "🔒  " + groupLabel(a, name);
-            if (type == TYPE_SETTINGS) return "⚙  " + name;
             return groupLabel(a, name);
         }
     }
@@ -1656,7 +1674,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
                     : LayoutInflater.from(MainActivity.this).inflate(R.layout.item_group, parent, false);
             GroupItem g = groups.get(pos);
             ((TextView) v.findViewById(R.id.groupName)).setText(g.label(MainActivity.this));
-            ((TextView) v.findViewById(R.id.groupCount)).setText(g.type == TYPE_SETTINGS ? "" : String.valueOf(g.count));
+            ((TextView) v.findViewById(R.id.groupCount)).setText(String.valueOf(g.count));
             return v;
         }
     }

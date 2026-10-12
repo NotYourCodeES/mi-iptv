@@ -71,11 +71,13 @@
             android:requiresFadingEdge="vertical"
             android:scrollbars="none">
 
+            <!-- Bottom padding so the last row can scroll clear of the fading edge -->
             <LinearLayout
                 android:id="@+id/content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:paddingBottom="48dp" />
         </ScrollView>
     </LinearLayout>
 </LinearLayout>

@@ -6,11 +6,10 @@ import android.content.DialogInterface;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.view.Gravity;
-import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import es.mitv.iptv.core.ParentalLock;
 
@@ -32,28 +31,18 @@ final class PinDialog {
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(pad, Math.round(8 * density), pad, 0);
 
-        TextView label = new TextView(a);
-        label.setText(prompt);
-        label.setTextSize(16);
-        label.setTextColor(a.getColor(R.color.text2));
-        box.addView(label);
-
         EditText field = new EditText(a);
         field.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         field.setFilters(new InputFilter[]{new InputFilter.LengthFilter(ParentalLock.PIN_DIGITS)});
         field.setGravity(Gravity.CENTER);
         field.setTextSize(28);
         field.setLetterSpacing(0.5f);
+        // Keep the dialog (and its "wrong PIN" message) visible instead of a full-screen keyboard
+        field.setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_FLAG_NO_FULLSCREEN);
         box.addView(field);
 
-        TextView error = new TextView(a);
-        error.setTextColor(a.getColor(R.color.live));
-        error.setTextSize(14);
-        error.setVisibility(View.GONE);
-        box.addView(error);
-
         AlertDialog dialog = new AlertDialog.Builder(a, android.R.style.Theme_Material_Dialog_Alert)
-                .setTitle(R.string.pin_title)
+                .setTitle(prompt) // compact, so it fits above the on-screen keyboard
                 .setView(box)
                 .setPositiveButton(android.R.string.ok, null)
                 .setNegativeButton(R.string.cancel, null)
@@ -64,8 +53,7 @@ final class PinDialog {
                 dialog.dismiss();
                 onAccepted.run();
             } else {
-                error.setText(problem);
-                error.setVisibility(View.VISIBLE);
+                dialog.setTitle(problem + "  ·  " + prompt);
                 field.setText("");
             }
         };
@@ -79,7 +67,9 @@ final class PinDialog {
         });
         dialog.setOnShowListener(d -> dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> submit.run()));
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+            // The dialog moves above the on-screen keyboard; the remote's number keys work too
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
+                    | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
         dialog.show();
         field.requestFocus();
