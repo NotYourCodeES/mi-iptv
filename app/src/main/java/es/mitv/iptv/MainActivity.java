@@ -1,6 +1,7 @@
 package es.mitv.iptv;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -73,6 +74,9 @@ import es.mitv.iptv.core.ConfigServer;
 import es.mitv.iptv.core.IptvConfig;
 import es.mitv.iptv.core.LogoCache;
 import es.mitv.iptv.core.M3uParser;
+import es.mitv.iptv.core.ParentalLock;
+import es.mitv.iptv.core.Playlists;
+import es.mitv.iptv.core.TvSettings;
 import es.mitv.iptv.core.Pairing;
 import es.mitv.iptv.core.RemoteApi;
 
@@ -81,7 +85,8 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
 
     static final String APP_VERSION = "1.4.0";
     static final String USER_AGENT = "MiIPTV/" + APP_VERSION + " (Android TV)";
-    private static final String CACHE_FILE = "playlist.m3u";
+    private static final String LEGACY_CACHE_FILE = "playlist.m3u";
+    private static final long REFRESH_CHECK_MS = 60 * 60 * 1000;
     private static final long PREVIEW_DELAY_MS = 650;
     private static final long EXIT_WINDOW_MS = 2500;
     /** Two Back presses this close together go to the TV's home screen from anywhere. */
@@ -90,13 +95,19 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private static final long NUMBER_ENTRY_MS = 1800;
     private static final String SEARCH_GROUP = "\u0000search";
 
-    private static final int TYPE_FAV = 0, TYPE_ALL = 1, TYPE_GROUP = 2, TYPE_SEARCH = 3;
+    private static final int TYPE_FAV = 0, TYPE_ALL = 1, TYPE_GROUP = 2, TYPE_SEARCH = 3, TYPE_LOCKED = 4, TYPE_SETTINGS = 5;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final SimpleDateFormat clockFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
     private SharedPreferences prefs;
+    private Playlists playlists;
+    private TvSettings settings;
+    private ParentalLock parental;
+    private String appliedLanguage;
+    private String loadedListKey;   // which list (and details) the channels on screen come from
+    private boolean openingSettings;
     private ExoPlayer player;
     private ConfigServer server;
     private RemoteApi remote;
@@ -112,7 +123,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private TextView previewName, previewMeta, previewFav;
     private TextView osdNumber, osdName, osdGroup, osdClock, osdFav, osdInitial;
     private ImageView osdLogo, welcomeQr;
-    private TextView welcomeTitle, welcomeText, welcomeUrl, welcomeStatus;
+    private TextView welcomeTitle, welcomeText, welcomeUrl, welcomeStatus, welcomeSettings;
     private TextView channelsEmpty, numberEntry;
     private View pairingOverlay;
     private TextView pairingCode, pairingText;
@@ -124,6 +135,8 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private volatile IptvConfig config;
     private volatile String status = "";
     private boolean loading;
+    private List<Channel> parsedChannels = Collections.emptyList(); // the whole playlist
+    /** What the TV shows: the playlist without hidden and locked categories. Everything works on this. */
     private volatile List<Channel> allChannels = Collections.emptyList();
     private final List<GroupItem> groups = new ArrayList<>();
     private int currentGroup = -1;
@@ -151,6 +164,12 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     private final Runnable previewTask = () -> {
         if (pendingPreview != null && panel.getVisibility() == View.VISIBLE) load(pendingPreview.url);
     };
+    private final Runnable refreshTick = new Runnable() {
+        @Override public void run() {
+            refreshIfDue();
+            ui.postDelayed(this, REFRESH_CHECK_MS);
+        }
+    };
     private final Runnable clockTick = new Runnable() {
         @Override public void run() {
             String now = clockFormat.format(new Date());
@@ -161,14 +180,26 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     };
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Lang.wrap(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        appliedLanguage = Lang.chosen(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
 
         status = getString(R.string.status_waiting);
-        prefs = getSharedPreferences("iptv", MODE_PRIVATE);
-        config = loadConfig();
+        prefs = getSharedPreferences(AndroidStore.PREFS, MODE_PRIVATE);
+        AndroidStore store = new AndroidStore(this);
+        playlists = Session.playlists(this);
+        settings = new TvSettings(store);
+        parental = new ParentalLock(store);
+        migrateLegacyCache();
+        config = playlists.activeConfig();
+        loadedListKey = listKey();
         favs = new HashSet<>(prefs.getStringSet("favs", Collections.<String>emptySet()));
         images = new ImageLoader(dp(96), USER_AGENT);
         audio = (AudioManager) getSystemService(AUDIO_SERVICE);
@@ -178,9 +209,10 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         setupLists();
         startServer();
         ui.post(clockTick);
+        ui.postDelayed(refreshTick, REFRESH_CHECK_MS);
 
         refreshTexts();
-        if (config.isComplete()) loadPlaylist(true);
+        if (config.isComplete()) loadPlaylist(true, false);
     }
 
     private void bindViews() {
@@ -225,6 +257,9 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         welcomeStatus = findViewById(R.id.welcomeStatus);
         welcomeProgress = findViewById(R.id.welcomeProgress);
         welcomeQr = findViewById(R.id.welcomeQr);
+        welcomeSettings = findViewById(R.id.welcomeSettings);
+        welcomeSettings.setText("⚙  " + getString(R.string.welcome_settings));
+        welcomeSettings.setOnClickListener(v -> openSettings());
     }
 
     // ---------------------------------------------------------------- Player
@@ -317,6 +352,15 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         groupList.setOnItemClickListener((p, v, pos, id) -> {
+            if (pos >= 0 && pos < groups.size() && groups.get(pos).type == TYPE_SETTINGS) {
+                openSettings();
+                return;
+            }
+            if (pos >= 0 && pos < groups.size() && groups.get(pos).type == TYPE_LOCKED) {
+                String name = groups.get(pos).name;
+                PinDialog.ask(this, parental, () -> unlock(name));
+                return;
+            }
             selectGroup(pos);
             if (!shownChannels.isEmpty()) channelList.requestFocus();
         });
@@ -349,11 +393,15 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             channelsEmpty.setText(getString(R.string.search_empty, searchQuery));
         } else if (g.type == TYPE_ALL) {
             list.addAll(allChannels);
+        } else if (g.type == TYPE_LOCKED) {
+            channelsEmpty.setText(R.string.group_locked_hint);
+        } else if (g.type == TYPE_SETTINGS) {
+            channelsEmpty.setText(R.string.group_settings_hint);
         } else {
             for (Channel c : allChannels) if (c.group.equals(g.name)) list.add(c);
         }
         shownChannels = list;
-        channelsTitle.setText(getString(R.string.channels_title, g.label(this), list.size()));
+        channelsTitle.setText(g.type == TYPE_SETTINGS ? g.label(this) : getString(R.string.channels_title, g.label(this), list.size()));
         channelAdapter.notifyDataSetChanged();
         int playing = indexOfUrl(list, committed != null ? committed.url : null);
         channelList.setSelection(Math.max(0, playing));
@@ -454,8 +502,14 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         return 0;
     }
 
-    private void setChannels(List<Channel> channels) {
-        allChannels = channels;
+    private void setChannels(List<Channel> channels, boolean quiet) {
+        parsedChannels = channels;
+        Session.groups = M3uParser.groups(channels);
+        if (quiet && !allChannels.isEmpty()) {
+            applyFilters(); // keeps what is on screen and playing
+            return;
+        }
+        allChannels = visibleChannels();
         searchQuery = null;
         channelsVersion++;
         rebuildGroups();
@@ -475,6 +529,53 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         if (remote != null) remote.publishChannelsChanged(channelsVersion);
     }
 
+    private Set<String> hiddenGroups() {
+        Playlists.Entry list = playlists.active();
+        return list == null ? Collections.<String>emptySet() : settings.hiddenGroups(list.id);
+    }
+
+    /** Locked categories, if the parental control is on. */
+    private Set<String> lockedGroups() {
+        Playlists.Entry list = playlists.active();
+        return list == null || !parental.hasPin() ? Collections.<String>emptySet() : settings.lockedGroups(list.id);
+    }
+
+    private List<Channel> visibleChannels() {
+        return TvSettings.visible(parsedChannels, hiddenGroups(), lockedGroups(), Session.unlocked);
+    }
+
+    /**
+     * Applies hidden and locked categories again (after Settings, unlocking, leaving the app or a reload)
+     * without disturbing what is on screen more than needed.
+     */
+    private void applyFilters() {
+        if (parsedChannels.isEmpty()) return;
+        allChannels = visibleChannels();
+        Set<String> visibleUrls = new HashSet<>();
+        for (Channel c : allChannels) visibleUrls.add(c.url);
+        List<Channel> zap = new ArrayList<>();
+        for (Channel c : zapList) if (visibleUrls.contains(c.url)) zap.add(c);
+        zapList = zap;
+        if (previous != null && previous.number > 0 && !visibleUrls.contains(previous.url)) previous = null;
+        channelsVersion++;
+        rebuildGroups();
+        selectGroup(currentGroup >= 0 && currentGroup < groups.size() ? currentGroup : defaultGroup());
+        if (committed != null && committed.number > 0 && !visibleUrls.contains(committed.url)) {
+            // What was playing is now hidden or locked
+            stopSharedStream();
+            if (!allChannels.isEmpty() && started) showPanel();
+        } else if (committed != null && committed.number > 0) {
+            zapIndex = indexOfUrl(zapList, committed.url);
+            if (zapIndex < 0) {
+                zapList = new ArrayList<>(allChannels);
+                zapIndex = indexOfUrl(zapList, committed.url);
+            }
+        }
+        updateWelcome();
+        if (remote != null) remote.publishChannelsChanged(channelsVersion);
+        notifyState();
+    }
+
     private void rebuildGroups() {
         // Keep the same category selected even if the positions move (search added or removed)
         GroupItem selected = (currentGroup >= 0 && currentGroup < groups.size()) ? groups.get(currentGroup) : null;
@@ -489,14 +590,31 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         if (searchQuery != null) {
             groups.add(new GroupItem(SEARCH_GROUP, ChannelSearch.find(allChannels, searchQuery).size(), TYPE_SEARCH));
         }
-        groups.add(new GroupItem(getString(R.string.group_favorites), favNames.size(), TYPE_FAV));
-        groups.add(new GroupItem(getString(R.string.group_all), allChannels.size(), TYPE_ALL));
-        for (String g : M3uParser.groups(allChannels)) groups.add(new GroupItem(g, counts.get(g), TYPE_GROUP));
+        if (!parsedChannels.isEmpty()) {
+            groups.add(new GroupItem(getString(R.string.group_favorites), favNames.size(), TYPE_FAV));
+            groups.add(new GroupItem(getString(R.string.group_all), allChannels.size(), TYPE_ALL));
+            // In playlist order: visible categories, and locked ones with a padlock (OK asks for the PIN)
+            Set<String> hidden = hiddenGroups();
+            Set<String> locked = lockedGroups();
+            Map<String, Integer> allCounts = new HashMap<>();
+            for (Channel c : parsedChannels) {
+                Integer n = allCounts.get(c.group);
+                allCounts.put(c.group, n == null ? 1 : n + 1);
+            }
+            for (String g : M3uParser.groups(parsedChannels)) {
+                if (hidden.contains(g)) continue;
+                if (counts.containsKey(g)) groups.add(new GroupItem(g, counts.get(g), TYPE_GROUP));
+                else if (locked.contains(g)) groups.add(new GroupItem(g, allCounts.get(g), TYPE_LOCKED));
+            }
+        }
+        groups.add(new GroupItem(getString(R.string.group_settings), 0, TYPE_SETTINGS));
         if (selected != null) {
             currentGroup = -1;
             for (int i = 0; i < groups.size(); i++) {
                 GroupItem g = groups.get(i);
-                if (g.type == selected.type && (g.type != TYPE_GROUP || g.name.equals(selected.name))) currentGroup = i;
+                boolean named = g.type == TYPE_GROUP || g.type == TYPE_LOCKED;
+                boolean selectedNamed = selected.type == TYPE_GROUP || selected.type == TYPE_LOCKED;
+                if (named && selectedNamed ? g.name.equals(selected.name) : g.type == selected.type) currentGroup = i;
             }
         }
         groupAdapter.notifyDataSetChanged();
@@ -506,6 +624,42 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         if (url == null) return -1;
         for (int i = 0; i < list.size(); i++) if (list.get(i).url.equals(url)) return i;
         return -1;
+    }
+
+    /** The PIN was right: show the locked categories until the user leaves the app. */
+    private void unlock(String groupName) {
+        Session.unlocked = true;
+        toast(getString(R.string.toast_unlocked));
+        applyFilters();
+        for (int i = 0; i < groups.size(); i++) {
+            if (groups.get(i).type == TYPE_GROUP && groups.get(i).name.equals(groupName)) {
+                selectGroup(i);
+                groupList.setSelection(i);
+                if (!shownChannels.isEmpty()) channelList.requestFocus();
+                break;
+            }
+        }
+    }
+
+    private void openSettings() {
+        openingSettings = true;
+        Session.setupUrl = configUrl();
+        startActivity(new Intent(this, SettingsActivity.class));
+    }
+
+    /** Picks up what changed in Settings (or elsewhere) while the main screen was away. */
+    private void applySettingsChanges() {
+        favs = new HashSet<>(prefs.getStringSet("favs", Collections.<String>emptySet()));
+        if (!listKey().equals(loadedListKey)) {
+            switchList();
+            return;
+        }
+        if (Session.reloadRequested) {
+            Session.reloadRequested = false;
+            loadPlaylist(true, !parsedChannels.isEmpty());
+        }
+        applyFilters();
+        refreshIfDue();
     }
 
     // ---------------------------------------------------------------- Favorites
@@ -565,6 +719,11 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
 
         if (backKey) {
             if (up && !e.isCanceled()) handleBack();
+            return true;
+        }
+
+        if ((code == KeyEvent.KEYCODE_MENU || code == KeyEvent.KEYCODE_SETTINGS) && welcome.getVisibility() == View.VISIBLE) {
+            if (down && e.getRepeatCount() == 0) openSettings();
             return true;
         }
 
@@ -733,10 +892,18 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
 
     // ---------------------------------------------------------------- Playlist download
 
-    private void loadPlaylist(boolean allowCache) {
+    /**
+     * Downloads the active list. {@code quiet} is the daily or requested reload while channels are on screen:
+     * what you are watching keeps playing, and if the download fails the current channels stay.
+     */
+    private void loadPlaylist(boolean allowCache, boolean quiet) {
         final IptvConfig cfg = config;
+        final Playlists.Entry list = playlists.active();
+        final String key = loadedListKey;
+        if (list == null || !cfg.isComplete()) return;
         loading = true;
         setStatus(getString(R.string.status_loading));
+        final File cache = cacheFile(this, list.id);
         io.execute(() -> {
             List<Channel> channels = null;
             String error = null;
@@ -747,35 +914,88 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
                     error = getString(R.string.error_empty_playlist);
                     channels = null;
                 } else {
-                    try (FileOutputStream out = new FileOutputStream(new File(getFilesDir(), CACHE_FILE))) {
+                    try (FileOutputStream out = new FileOutputStream(cache)) {
                         out.write(data);
                     }
+                    settings.setLastLoaded(System.currentTimeMillis());
                 }
             } catch (Exception e) {
                 error = getString(R.string.error_download, e.getMessage());
             }
-            if (channels == null && allowCache) {
-                File cache = new File(getFilesDir(), CACHE_FILE);
-                if (cache.exists()) {
-                    try (InputStreamReader r = new InputStreamReader(new FileInputStream(cache), StandardCharsets.UTF_8)) {
-                        channels = M3uParser.parse(r);
-                        error = getString(R.string.error_using_cache, error);
-                    } catch (IOException ignored) {}
-                }
+            if (channels == null && allowCache && !quiet && cache.exists()) {
+                try (InputStreamReader r = new InputStreamReader(new FileInputStream(cache), StandardCharsets.UTF_8)) {
+                    channels = M3uParser.parse(r);
+                    error = getString(R.string.error_using_cache, error);
+                } catch (IOException ignored) {}
             }
             final List<Channel> result = channels;
             final String err = error;
             ui.post(() -> {
                 loading = false;
+                if (!key.equals(loadedListKey)) return; // another list was chosen meanwhile
                 if (result != null) {
                     setStatus(err != null ? err : getString(R.string.status_channels, result.size()));
-                    setChannels(result);
+                    setChannels(result, quiet);
                 } else {
-                    setStatus(err);
+                    setStatus(quiet ? getString(R.string.status_channels, parsedChannels.size()) : err);
                     updateWelcome();
                 }
             });
         });
+    }
+
+    /** Where the last download of a list is kept, for when the provider can't be reached. */
+    static File cacheFile(Context context, String listId) {
+        return new File(context.getFilesDir(), "playlist-" + listId + ".m3u");
+    }
+
+    /** Before there were several lists the cache had a single name: it belongs to the first list. */
+    private void migrateLegacyCache() {
+        File legacy = new File(getFilesDir(), LEGACY_CACHE_FILE);
+        Playlists.Entry list = playlists.active();
+        if (!legacy.exists()) return;
+        if (list != null && !cacheFile(this, list.id).exists()) legacy.renameTo(cacheFile(this, list.id));
+        else legacy.delete();
+    }
+
+    /** Identifies the active list and its details, to notice when Settings, the web or the phone change them. */
+    private String listKey() {
+        Playlists.Entry list = playlists.active();
+        if (list == null) return "";
+        IptvConfig c = list.config;
+        return list.id + "|" + c.mode + "|" + c.m3uUrl + "|" + c.server + "|" + c.user + "|" + c.pass;
+    }
+
+    /** Another list (or new details) is in use: start over with its channels. */
+    private void switchList() {
+        String before = loadedListKey;
+        config = playlists.activeConfig();
+        loadedListKey = listKey();
+        Playlists.Entry list = playlists.active();
+        // Same list with new details: its saved copy belongs to the old provider
+        if (list != null && before != null && before.startsWith(list.id + "|")) cacheFile(this, list.id).delete();
+        searchQuery = null;
+        parsedChannels = Collections.emptyList();
+        allChannels = Collections.emptyList();
+        Session.groups = Collections.emptyList();
+        shownChannels = new ArrayList<>();
+        zapList = new ArrayList<>();
+        previous = null;
+        if (committed != null) stopSharedStream();
+        rebuildGroups();
+        currentGroup = -1;
+        panel.setVisibility(View.GONE);
+        channelsVersion++;
+        if (remote != null) remote.publishChannelsChanged(channelsVersion);
+        if (config.isComplete()) loadPlaylist(true, false);
+        else setStatus(getString(R.string.status_waiting));
+        updateWelcome();
+    }
+
+    private void refreshIfDue() {
+        if (!loading && config.isComplete() && settings.refreshDue(System.currentTimeMillis())) {
+            loadPlaylist(true, !parsedChannels.isEmpty());
+        }
     }
 
     private static byte[] download(String address) throws IOException {
@@ -824,6 +1044,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
             s.setRemote(remote);
             s.start();
             server = s;
+            Session.pairing = remote.pairing();
             // Let the phone app find the TV without typing its address
             if (discovery == null) discovery = new RemoteDiscovery(this);
             Map<String, String> txt = new HashMap<>();
@@ -848,7 +1069,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         }
     }
 
-    @Override public IptvConfig currentConfig() { return config; }
+    @Override public IptvConfig currentConfig() { return playlists.activeConfig(); }
 
     @Override public String status() { return status; }
 
@@ -856,30 +1077,17 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
 
     @Override
     public String onConfigSaved(IptvConfig cfg) {
-        config = cfg;
-        prefs.edit()
-                .putString("mode", cfg.mode).putString("m3uUrl", cfg.m3uUrl)
-                .putString("server", cfg.server).putString("user", cfg.user).putString("pass", cfg.pass)
-                .apply();
-        ui.post(() -> loadPlaylist(false));
+        // The setup page changes the list in use (or creates the first one)
+        playlists.updateActive(cfg, getString(R.string.lists_default_name));
+        ui.post(this::switchList);
         return getString(R.string.cfg_saved);
     }
 
     @Override
     public String onReload() {
         if (!config.isComplete()) return getString(R.string.cfg_missing_first);
-        ui.post(() -> loadPlaylist(true));
+        ui.post(() -> loadPlaylist(true, !parsedChannels.isEmpty()));
         return getString(R.string.cfg_reloading);
-    }
-
-    private IptvConfig loadConfig() {
-        IptvConfig c = new IptvConfig();
-        c.mode = prefs.getString("mode", IptvConfig.MODE_M3U);
-        c.m3uUrl = prefs.getString("m3uUrl", "");
-        c.server = prefs.getString("server", "");
-        c.user = prefs.getString("user", "");
-        c.pass = prefs.getString("pass", "");
-        return c;
     }
 
     private void setStatus(String s) {
@@ -908,6 +1116,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         boolean show = allChannels.isEmpty() && committed == null;
         welcome.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show) return;
+        if (!welcomeSettings.hasFocus()) welcomeSettings.requestFocus();
         String url = configUrl();
         welcomeProgress.setVisibility(loading ? View.VISIBLE : View.GONE);
         if (loading) {
@@ -958,7 +1167,13 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     @Override
     protected void onStart() {
         super.onStart();
+        if (!Lang.chosen(this).equals(appliedLanguage)) {
+            recreate(); // the language was changed in Settings
+            return;
+        }
+        openingSettings = false;
         started = true;
+        applySettingsChanges();
         startServer();
         if (loadedUrl != null) { paused = false; player.prepare(); player.play(); }
         refreshTexts();
@@ -969,6 +1184,11 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
     protected void onStop() {
         super.onStop();
         started = false;
+        // Locked categories close again when you leave the app (but not to open Settings)
+        if (!openingSettings && Session.unlocked) {
+            Session.unlocked = false;
+            applyFilters();
+        }
         if (player != null) player.stop();
         notifyState();
     }
@@ -1002,7 +1222,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         numberEntry.setVisibility(View.VISIBLE);
         ui.removeCallbacks(goToTypedNumber);
         // Switch at once when no longer number is possible, otherwise wait for more digits
-        int maxDigits = String.valueOf(allChannels.size()).length();
+        int maxDigits = String.valueOf(parsedChannels.size()).length();
         if (typedNumber.length() >= maxDigits) goToTypedNumber();
         else ui.postDelayed(goToTypedNumber, NUMBER_ENTRY_MS);
     }
@@ -1014,8 +1234,9 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         int n = Integer.parseInt(typedNumber.toString());
         typedNumber.setLength(0);
         Channel c = channelByNumber(n);
-        if (c == null) toast(getString(R.string.toast_no_channel_number, n));
-        else playChannel(c);
+        if (c != null) playChannel(c);
+        else if (n <= parsedChannels.size() && lockedGroups().contains(parsedChannels.get(n - 1).group)) toast(getString(R.string.toast_channel_locked, n));
+        else toast(getString(R.string.toast_no_channel_number, n));
     }
 
     private Channel channelByNumber(int n) {
@@ -1314,10 +1535,15 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         public String share(String url, String title, boolean asPlaylist) {
             return onUi(() -> {
                 if (asPlaylist) {
+                    // A new list, so the one in use (maybe an Xtream account) isn't lost
                     IptvConfig cfg = new IptvConfig();
                     cfg.mode = IptvConfig.MODE_M3U;
                     cfg.m3uUrl = url;
-                    return onConfigSaved(cfg);
+                    String name = title != null && !title.trim().isEmpty() ? title : Playlists.defaultName(cfg);
+                    playlists.setActive(playlists.add(name, cfg).id);
+                    switchList();
+                    toast(getString(R.string.toast_list_added, playlists.active().name));
+                    return getString(R.string.remote_list_added);
                 }
                 if (!started) return getString(R.string.remote_open_app);
                 playShared(url, title);
@@ -1413,6 +1639,8 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
         String label(MainActivity a) {
             if (type == TYPE_FAV) return "★  " + name;
             if (type == TYPE_SEARCH) return a.getString(R.string.group_search, a.searchQuery);
+            if (type == TYPE_LOCKED) return "🔒  " + groupLabel(a, name);
+            if (type == TYPE_SETTINGS) return "⚙  " + name;
             return groupLabel(a, name);
         }
     }
@@ -1428,7 +1656,7 @@ public class MainActivity extends Activity implements ConfigServer.Listener {
                     : LayoutInflater.from(MainActivity.this).inflate(R.layout.item_group, parent, false);
             GroupItem g = groups.get(pos);
             ((TextView) v.findViewById(R.id.groupName)).setText(g.label(MainActivity.this));
-            ((TextView) v.findViewById(R.id.groupCount)).setText(String.valueOf(g.count));
+            ((TextView) v.findViewById(R.id.groupCount)).setText(g.type == TYPE_SETTINGS ? "" : String.valueOf(g.count));
             return v;
         }
     }
