@@ -23,32 +23,78 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests and build the APK
+      # With these secrets both apps are signed with the same key on every build, so new
+      # versions install over old ones. Without them, branch and PR builds use the debug key,
+      # but a release tag fails: a debug-signed release would force everyone to uninstall.
+      - name: Release signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MIIPTV_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.MIIPTV_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.MIIPTV_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.MIIPTV_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "MIIPTV_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "::error::Release tags must be signed with the release key. Add all four MIIPTV_KEYSTORE_* / MIIPTV_KEY_* secrets."
+            exit 1
+          else
+            echo "No signing secrets: using the debug key"
+          fi
+
+      - name: Run unit tests and build the APKs
+        env:
+          MIIPTV_KEYSTORE_PASSWORD: ${{ secrets.MIIPTV_KEYSTORE_PASSWORD }}
+          MIIPTV_KEY_ALIAS: ${{ secrets.MIIPTV_KEY_ALIAS }}
+          MIIPTV_KEY_PASSWORD: ${{ secrets.MIIPTV_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew testDebugUnitTest assembleDebug --stacktrace
+          ./gradlew testDebugUnitTest :app:assembleRelease :phone:assembleRelease --stacktrace
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/MiIPTV.apk
+          cp phone/build/outputs/apk/release/phone-release.apk dist/MiIPTV-Remote.apk
 
-      - name: Upload APK
+      - name: Check the APKs use the release key
+        if: env.MIIPTV_KEYSTORE != ''
+        env:
+          MIIPTV_KEYSTORE_PASSWORD: ${{ secrets.MIIPTV_KEYSTORE_PASSWORD }}
+          MIIPTV_KEY_ALIAS: ${{ secrets.MIIPTV_KEY_ALIAS }}
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          EXPECTED=$(keytool -exportcert -keystore "$MIIPTV_KEYSTORE" -storepass:env MIIPTV_KEYSTORE_PASSWORD -alias "$MIIPTV_KEY_ALIAS" | sha256sum | cut -d' ' -f1)
+          for APK in dist/*.apk; do
+            ACTUAL=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+            if [ "$ACTUAL" != "$EXPECTED" ]; then
+              echo "::error::$APK is not signed with the release key"
+              exit 1
+            fi
+            echo "$APK: signed with the release key"
+          done
+
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: MiIPTV-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: MiIPTV-apks
+          path: dist/*.apk
 
-      - name: Attach APK to the GitHub release
+      - name: Attach APKs to the GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          APK="MiIPTV-${GITHUB_REF_NAME}.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "$APK"
+          TV="MiIPTV-${GITHUB_REF_NAME}.apk"
+          PHONE="MiIPTV-Remote-${GITHUB_REF_NAME}.apk"
+          cp dist/MiIPTV.apk "$TV"
+          cp dist/MiIPTV-Remote.apk "$PHONE"
           # Release notes come from docs/releases/<tag>.md when it exists, otherwise from the commits
           NOTES="docs/releases/${GITHUB_REF_NAME}.md"
           # Works whether the release was created on github.com or not yet
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "$APK" --clobber
+            gh release upload "$GITHUB_REF_NAME" "$TV" "$PHONE" --clobber
             if [ -f "$NOTES" ]; then gh release edit "$GITHUB_REF_NAME" --notes-file "$NOTES"; fi
           elif [ -f "$NOTES" ]; then
-            gh release create "$GITHUB_REF_NAME" "$APK" --title "Mi IPTV $GITHUB_REF_NAME" --notes-file "$NOTES"
+            gh release create "$GITHUB_REF_NAME" "$TV" "$PHONE" --title "Mi IPTV $GITHUB_REF_NAME" --notes-file "$NOTES"
           else
-            gh release create "$GITHUB_REF_NAME" "$APK" --title "Mi IPTV $GITHUB_REF_NAME" --generate-notes
+            gh release create "$GITHUB_REF_NAME" "$TV" "$PHONE" --title "Mi IPTV $GITHUB_REF_NAME" --generate-notes
           fi
         env:
           GH_TOKEN: ${{ github.token }}

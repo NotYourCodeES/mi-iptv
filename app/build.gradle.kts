@@ -2,6 +2,9 @@ plugins {
     id("com.android.application")
 }
 
+// Release key from the environment (GitHub secrets on CI); local builds use the debug key
+val releaseKeystore = System.getenv("MIIPTV_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+
 android {
     namespace = "es.mitv.iptv"
     compileSdk = 35
@@ -10,15 +13,26 @@ android {
         applicationId = "es.mitv.iptv"
         minSdk = 21
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.5.0"
+    }
+
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("MIIPTV_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("MIIPTV_KEY_ALIAS")
+                keyPassword = System.getenv("MIIPTV_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Signed with the debug key: fine for sideloading on your own TV
-            signingConfig = signingConfigs.getByName("debug")
+            // Without a release key (local builds) the debug key is fine for sideloading on your own TV
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 

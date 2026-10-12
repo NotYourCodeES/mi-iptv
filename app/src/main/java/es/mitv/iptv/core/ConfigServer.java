@@ -185,7 +185,7 @@ public final class ConfigServer {
                 + ",\"status\":" + json(listener.status()) + "}";
     }
 
-    static boolean sameAccount(IptvConfig a, IptvConfig b) {
+    public static boolean sameAccount(IptvConfig a, IptvConfig b) {
         return IptvConfig.MODE_XTREAM.equals(a.mode) && IptvConfig.MODE_XTREAM.equals(b.mode)
                 && IptvConfig.normalizeServer(a.server).equalsIgnoreCase(IptvConfig.normalizeServer(b.server))
                 && a.user.trim().equals(b.user.trim());

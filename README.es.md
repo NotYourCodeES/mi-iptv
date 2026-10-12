@@ -20,7 +20,8 @@ Escribir enlaces largos y contraseñas con el mando de la tele es un suplicio. M
 - **Configuración desde cualquier dispositivo de tu red.** Página web integrada (y código QR en la tele) para escribir un enlace M3U o servidor, usuario y contraseña Xtream Codes.
 - **Vista previa en directo.** Al moverte por la lista, el canal seleccionado se reproduce en una ventana pequeña; pulsa OK para verlo a pantalla completa.
 - **Favoritos.** Mantén pulsado OK sobre un canal para añadirlo. El botón **Guía** del mando abre directamente tus favoritos.
-- **App de iPhone como mando (opcional).** [Mi IPTV Remote](ios/) encuentra la tele en tu Wi-Fi y convierte el móvil en un mando táctil, un teclado para buscar canales, una lista de canales con logos y un destino de *Compartir* para mandar enlaces desde Safari a la tele. La tele funciona exactamente igual sin ella.
+- **Ajustes en la tele.** Varias listas o cuentas Xtream entre las que cambiar, categorías ocultas, control parental con PIN, recarga diaria de los canales e idioma, todo con el mando.
+- **Apps de móvil como mando, para iPhone y Android (opcionales).** Mi IPTV Remote ([iPhone](ios/) · [Android](phone/)) encuentra la tele en tu Wi-Fi y convierte el móvil en un mando táctil, un teclado para buscar canales, una lista de canales con logos y un destino de *Compartir* para mandar enlaces a la tele. La tele funciona exactamente igual sin ellas.
 - **Pensada para el mando.** Arriba/Abajo y CH+/CH− cambian de canal, Atrás no cierra la app por accidente (pulsándolo dos veces seguidas vas al inicio de la tele) y un banner muestra el logo, número y categoría del canal.
 - **Logos de los canales** descargados y guardados en memoria con un cargador de imágenes propio.
 - **Audio Dolby.** Incluye un descodificador FFmpeg para que los canales con AC-3 / E-AC-3 tengan sonido aunque la tele no lo ofrezca a las apps.
@@ -29,7 +30,7 @@ Escribir enlaces largos y contraseñas con el mando de la tele es un suplicio. M
 
 ## Cómo compilarla e instalarla
 
-1. Abre el proyecto en Android Studio y elige **Build → Assemble Project** (o ejecuta `./gradlew assembleDebug`). También puedes descargar el APK desde la sección **Releases** de GitHub.
+1. Abre el proyecto en Android Studio y elige **Build → Assemble Project** (o ejecuta `./gradlew assembleDebug`). También puedes descargar los APK desde la sección **Releases** de GitHub: `MiIPTV-vX.Y.Z.apk` es la app de la tele y `MiIPTV-Remote-vX.Y.Z.apk` el mando opcional para móviles Android (Android 8 o posterior). Desde la 1.5.0, las dos apps se firman siempre con la misma clave y las versiones nuevas se instalan encima. Si vienes de la 1.4.0 o anterior, desinstala una vez la app de la tele antes.
 2. Instálalo en la tele con la app **Downloader** (sirviendo el APK desde el ordenador con `jwebserver -b 0.0.0.0 -p 8000`), con `adb install` o con un pendrive.
 3. Abre **Mi IPTV** en la tele, entra desde el navegador en la dirección que muestra (por ejemplo `http://192.168.1.50:8080`) y escribe los datos de tu proveedor.
 
@@ -54,10 +55,22 @@ https://raw.githubusercontent.com/NotYourCodeES/mi-iptv/main/docs/demo/playlist.
 | **0–9** | Escribir un número de canal | Escribir un número de canal |
 | **Último canal** | Canal anterior | Canal anterior |
 | **Play / Pausa** | Pausar; pulsa otra vez para volver al directo | — |
+| **Arriba** desde lo alto de las listas | — | Ir al botón **Ajustes** |
 
-## Mando desde el iPhone
+## Ajustes en la tele
 
-La [app de iPhone](ios/) es opcional y funciona en la misma red que la tele:
+Abre **Ajustes** con el botón de la esquina superior derecha del menú de canales, o desde la pantalla de bienvenida:
+
+- **Listas**: guarda varios enlaces M3U o cuentas Xtream y elige cuál usa la tele. La página de configuración y las apps del móvil cambian la que esté en uso.
+- **Idioma**: el de la tele, español o inglés.
+- **Categorías**: oculta las que no uses. Desaparecen de la lista, del zapping, de favoritos, de la búsqueda y de las apps del móvil.
+- **Control parental**: bloquea categorías con un PIN de 4 cifras. Se vuelven a bloquear al salir de la app.
+- **Actualización**: recarga los canales una vez al día sin cortar lo que estás viendo, o recárgalos ahora.
+- **Información**: versión, dirección de configuración, móviles emparejados y borrar favoritos.
+
+## Mando desde el móvil
+
+La app de mando es opcional, existe para [iPhone](ios/) y [Android](phone/) y funciona en la misma red que la tele:
 
 <p align="center">
   <img src="docs/screenshots/iphone-connect.webp" width="260" alt="La app de iPhone encuentra la tele en la Wi-Fi">
@@ -69,10 +82,17 @@ La [app de iPhone](ios/) es opcional y funciona en la misma red que la tele:
 - **Teclado**: escribes en el móvil y la tele va mostrando los canales que coinciden.
 - **Canales**: la lista completa con logos, categorías y favoritos. Toca un canal para verlo en la tele.
 - **Cambia la lista o la cuenta desde el móvil**: la pestaña *Más* abre dentro de la app la página de configuración de la tele para editar el enlace M3U o el servidor, usuario y contraseña de Xtream, y permite pegar cualquier enlace para cargarlo como lista de canales. Sin necesidad de ordenador.
-- **Compartir**: en Safari o cualquier app, *Compartir → Mi IPTV* reproduce una emisión en la tele o carga una lista.
+- **Compartir**: en Safari, Chrome o cualquier app, *Compartir → Mi IPTV* reproduce una emisión en la tele o carga una lista.
+- **Botones de volumen (Android)**: los botones de volumen del propio móvil cambian el volumen de la tele mientras la app está abierta.
 - **Emparejamiento**: la primera vez la tele muestra un código de 4 cifras. Los móviles emparejados se pueden olvidar desde la página de configuración.
 
-Consulta [`ios/README.md`](ios/README.md) para compilarla e instalarla con Xcode.
+En Android, instala `MiIPTV-Remote-vX.Y.Z.apk` desde la sección **Releases** ([`phone/README.md`](phone/README.md)). En iPhone, compílala con Xcode ([`ios/README.md`](ios/README.md)).
+
+<p align="center">
+  <img src="docs/screenshots/android-remote.webp" width="260" alt="El mando de la app de Android">
+  &nbsp;
+  <img src="docs/screenshots/android-channels.webp" width="260" alt="La lista de canales de la app de Android">
+</p>
 
 ## Aviso
 
